@@ -49,7 +49,7 @@ class IntegrationTests {
                 ])
             ]
             
-            let (item, prompt) = try await service.createItem(
+            let (item, _) = try await service.createItem(
                 secret: Secret(value: secret.bytes),
                 collection: collection,
                 properties: properties
