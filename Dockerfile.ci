@@ -1,0 +1,14 @@
+# Use the Swift image for Ubuntu Noble (24.04)
+FROM swift:6.2.3-noble
+
+# Prevent interactive prompts during apt-get
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Pre-install all required system dependencies
+RUN apt-get update && apt-get install -y \
+    dbus-x11 \
+    gnome-keyring \
+    && rm -rf /var/lib/apt/lists/*
+
+# Pre-set the English locale (good practice for Swift logs)
+ENV LANG=en_US.UTF-8
