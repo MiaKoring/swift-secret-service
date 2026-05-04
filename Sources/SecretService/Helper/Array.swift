@@ -17,6 +17,24 @@ extension Array where Element == DBusValue {
         
         return result
     }
+    
+    /// Tries to convert [DBusValue] to [String] as objectPaths
+    /// Returns nil if the array contains something not a byte
+    var asObjectPathArray: [String]? {
+        var result = [String]()
+        
+        for element in self {
+            guard let byte = element.objectPath else {
+                print("found unexpected type")
+                return nil
+            }
+            
+            result.append(byte)
+        }
+        
+        return result
+    }
+    
 }
 
 extension Array where Element == UInt8 {

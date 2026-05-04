@@ -1,0 +1,31 @@
+name: Integration Tests (D-Bus & Secret Service)
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: blacksmith-4vcpu-ubuntu-2404-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Swift 6.3
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.3"
+
+      - name: Install D-Bus and Gnome Keyring
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dbus-x11 gnome-keyring libsecret-1-0
+
+      - name: Run Integration Tests
+        run: |
+          # Startet einen isolierten D-Bus Session Bus und führt darin das Setup aus
+          dbus-run-session -- sh -c '
+            # 1. start & unlock Gnome Keyring Daemon
+            export $(echo "testpassword" | gnome-keyring-daemon --unlock --components=secrets)
+            
+            RUN_INTEGRATION_TESTS=1 swift test
+          '

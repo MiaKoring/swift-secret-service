@@ -5,7 +5,7 @@ import CryptoSwift
 @testable import SecretService
 
 class IntegrationTests {
-    /// Integration tests should set this attribute as string to true on temporarily created items
+    /// Integration tests should set this attribute as string to "1" on temporarily created items
     /// They will be deleted in deinit in the future
     static let teardownDeleteAttributeName = "swift-secret-service-delete-on-teardown"
     
@@ -29,7 +29,7 @@ class IntegrationTests {
     }
     
     @Test(.enabled(if: ProcessInfo.runIntegrationTests))
-    func testCreateReadItem() async throws {
+    func testCreateReadDeleteItem() async throws {
         try await SecretService.withDefaultConnection { connection in
             let service = SecretService(connection: connection)
             try await service.connect()
@@ -45,7 +45,7 @@ class IntegrationTests {
                 "org.freedesktop.Secret.Item.Label": .string("test"),
                 "org.freedesktop.Secret.Item.Attributes": .dictionary([
                     .string("service"): .string("de.amethystsoft.swift-secret-service.tests"),
-                    .string(Self.teardownDeleteAttributeName): .boolean(true)
+                    .string(Self.teardownDeleteAttributeName): .string("1")
                 ])
             ]
             
@@ -77,6 +77,26 @@ class IntegrationTests {
             
             #expect(key == item)
             #expect(value.value == secret.bytes)
+            
+            try await Self.teardown(collection: collection, service: service)
+            
+            let itemsAfterDelete = try await service.searchItems(
+                for: [Self.teardownDeleteAttributeName: "1"],
+                in: collection
+            )
+            
+            #expect(itemsAfterDelete.isEmpty)
+        }
+    }
+    
+    static func teardown(collection: String, service: SecretService) async throws {
+        let items = try await service.searchItems(
+            for: [Self.teardownDeleteAttributeName: "1"],
+            in: collection
+        )
+        
+        for item in items {
+            let prompt = try await service.deleteItem(item: item)
         }
     }
 }
