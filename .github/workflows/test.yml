@@ -10,7 +10,12 @@ jobs:
   test:
     runs-on: blacksmith-4vcpu-ubuntu-2404-arm
     container:
-      image: swift:6.2.3-noble
+      # This image now starts instantly with DBus and Keyring ready
+      image: ghcr.io/${{ github.repository_owner }}/amethyst-ci:latest
+      # Using credentials to pull from your GHCR
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout code
