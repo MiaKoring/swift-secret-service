@@ -19,16 +19,15 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y dbus-x11 gnome-keyring libsecret-1-dev
+          apt-get install -y dbus-x11 gnome-keyring
 
       - name: Test with DBus & Secret Service
         run: |
           # DBus Session Bus starten
           dbus-run-session -- sh -c '
-            # Gnome Keyring initialisieren (Headless)
-            # Das Passwort "test" wird per stdin übergeben
+            # initialize Gnome Keyring (Headless)
+            # pass "test" via stdin
             eval $(echo "test" | gnome-keyring-daemon --unlock --components=secrets)
             
-            # Integration Tests ausführen
             RUN_INTEGRATION_TESTS=1 swift test -Xcc -I/usr/include -Xlinker -L/usr/lib
           '
