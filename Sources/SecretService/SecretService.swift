@@ -134,6 +134,43 @@ public final class SecretService: Sendable {
         return try response.decodeGetSecrets(with: symmetricKey)
     }
     
+    /// Search for items with certain attributes in the collection
+    public func searchItems(
+        for attributes: [String: String],
+        in collection: String
+    ) async throws(SecSError) -> [String] {        
+        let request = DBusRequest.createMethodCall(
+            destination: SecS.service,
+            path: collection,
+            interface: SecS.Iface.collection,
+            method: "SearchItems",
+            body: [
+                .dictionary(attributes.asStringToString)
+            ]
+        )
+        
+        guard let response = try await send(request) else { throw .noResponse }
+        
+        return try response.decodeSearchItems()
+    }
+    
+    /// Deletes an item
+    /// Returns prompt object or nil if no prompt is necessary
+    public func deleteItem(
+        item: String
+    ) async throws(SecSError) -> String? {
+        let request = DBusRequest.createMethodCall(
+            destination: SecS.service,
+            path: item,
+            interface: SecS.Iface.item,
+            method: "Delete",
+        )
+        
+        guard let response = try await send(request) else { throw .noResponse }
+        
+        return try response.decodeDeleteItem()
+    }
+    
     public static func withDefaultConnection<R: Sendable>(
         _ block: @escaping @Sendable (DBusServerConnection) async throws -> R
     ) async throws -> R {
@@ -143,7 +180,7 @@ public final class SecretService: Sendable {
     }
     
     /// Sends the request on the current connection and converts errors
-    private func send(_ request: DBusRequest) async throws(SecretServiceError) -> DBusMessage? {
+    private func send(_ request: DBusRequest) async throws(SecSError) -> DBusMessage? {
         do {
             return try await connection.send(request)
         } catch {

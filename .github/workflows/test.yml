@@ -1,0 +1,38 @@
+name: Swift Test (Ubuntu 24.04)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: blacksmith-4vcpu-ubuntu-2404-arm
+    container:
+      image: swift:6.2.3-noble
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache Swift dependencies
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: ${{ runner.os }}-swift-${{ hashFiles('Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-swift-
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y dbus-x11 gnome-keyring
+
+      - name: Test with DBus & Secret Service
+        run: |
+          # Use dbus-run-session to wrap the test execution
+          dbus-run-session -- sh -c '
+            echo "test" | gnome-keyring-daemon --unlock --components=secrets
+            RUN_INTEGRATION_TESTS=1 swift test --parallel -Xcc -I/usr/include -Xlinker -L/usr/lib
+          '

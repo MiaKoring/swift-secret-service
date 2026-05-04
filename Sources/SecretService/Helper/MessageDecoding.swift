@@ -74,4 +74,32 @@ extension DBusMessage {
             throw .unexpectedResponse(for: "GetSecrets")
         }
     }
+    
+    func decodeSearchItems() throws(SecSError) -> [String] {
+        if
+            case .methodReturn = self.messageType,
+            body.count >= 1,
+            let items = body[0].array?.asObjectPathArray
+        {
+            return items
+        } else if case .error = self.messageType {
+            throw .returnedError(body[0, nil]?.string)
+        } else {
+            throw .unexpectedResponse(for: "SearchItems")
+        }
+    }
+    
+    func decodeDeleteItem() throws(SecSError) -> String? {
+        if
+            case .methodReturn = self.messageType,
+            body.count >= 1,
+            let prompt = body[0].objectPath
+        {
+            return prompt != "/" ? prompt: nil
+        } else if case .error = self.messageType {
+            throw .returnedError(body[0, nil]?.string)
+        } else {
+            throw .unexpectedResponse(for: "Items.Delete")
+        }
+    }
 }
