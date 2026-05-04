@@ -3,7 +3,7 @@ import CryptoSwift
 import BigInt
 import Foundation
 
-class IETF1024DH {
+struct IETF1024DH: Sendable {
     static let primeString = """
 FFFFFFFF FFFFFFFF C90FDAA2 2168C234 C4C6628B 80DC1CD1
 29024E08 8A67CC74 020BBEA6 3B139B22 514A0879 8E3404DD
@@ -34,20 +34,21 @@ FFFFFFFF FFFFFFFF
         self.publicKey = publicKey.serialize().byteArray
     }
     
-    func aesKey(with otherPublicKey: [UInt8]) -> [UInt8] {
+    func aesKey(with otherPublicKey: [UInt8]) throws(SecSError) -> [UInt8] {
         let bobPublic = BigUInt(Data(otherPublicKey))
         
         let sharedSecret = bobPublic.power(privateKey, modulus: Self.p)
         
-        return Array(sharedSecret.serialize().sha256().byteArray.prefix(16))
+        do {
+            return try HKDF(
+                password: sharedSecret.serialize().byteArray,
+                salt: nil,
+                info: nil,
+                keyLength: 16,
+                variant: .sha2(.sha256)
+            ).calculate()
+        } catch {
+            throw .diffieHellmanFailed(error)
+        }
     }
-    
-    /// Decrypt a message
-    func decrypt(encryptedData: [UInt8], iv: [UInt8], key: [UInt8]) throws -> String {
-        let aes = try AES(key: key, blockMode: CBC(iv: iv), padding: .pkcs7)
-        let decryptedBytes = try aes.decrypt(encryptedData)
-        
-        return String(bytes: decryptedBytes, encoding: .utf8) ?? ""
-    }
-    
 }
