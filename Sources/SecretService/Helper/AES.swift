@@ -6,12 +6,11 @@ extension AES {
         encryptedData: [UInt8],
         iv: [UInt8],
         key: [UInt8]
-    ) throws(SecSError) -> String {
+    ) throws(SecSError) -> [UInt8] {
         do {
             let aes = try AES(key: key, blockMode: CBC(iv: iv), padding: .pkcs7)
-            let decryptedBytes = try aes.decrypt(encryptedData)
             
-            return String(bytes: decryptedBytes, encoding: .utf8) ?? ""
+            return try aes.decrypt(encryptedData)
         } catch {
             throw .secretDecryptionFailed(error)
         }

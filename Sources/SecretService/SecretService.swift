@@ -20,7 +20,7 @@ public final class SecretService: Sendable {
     
     private let connection: DBusServerConnection
     
-    init(connection: DBusServerConnection) {
+    public init(connection: DBusServerConnection) {
         self.connection = connection
     }
     
@@ -29,7 +29,8 @@ public final class SecretService: Sendable {
         var sessionPath: String?
     }
     
-    func connect() async throws(SecSError) {
+    /// Start a session
+    public func connect() async throws(SecSError) {
         let dh = IETF1024DH()
         
         let dbusPublicKey = dh.publicKey.map { DBusValue.byte($0) }
@@ -57,7 +58,7 @@ public final class SecretService: Sendable {
     }
     
     /// Get the collection for the given alias
-    func readAlias(_ name: String = "default") async throws(SecSError) -> String? {
+    public func readAlias(_ name: String = "default") async throws(SecSError) -> String? {
         let request = DBusRequest.createMethodCall(
             destination: SecS.service,
             path: SecS.service.asDBusPath,
@@ -73,26 +74,16 @@ public final class SecretService: Sendable {
         return try response.decodeReadAlias()
     }
     
-    func storeItem(
-        value: [UInt8],
-        contentType: String = "text/plain; charset=utf8",
+    /// Stores a secret
+    public func createItem(
+        secret: Secret,
         collection: String,
         properties: [String: DBusValue]
     ) async throws(SecSError) -> (item: String?, prompt: String?) {
-        var session: String?
-        var symmetricKey: [UInt8]?
-        
-        sessionData.withLock { data in
-            session = data.sessionPath
-            symmetricKey = data.symmetricKey
-        }
-        
-        guard let session, let symmetricKey else {
-            throw .noActiveSession
-        }
+        let (session, symmetricKey) = try getSession()
         
         let (encryptedValue, iv) = try AES.encryptAES128PKCS7(
-            data: value,
+            data: secret.value,
             key: symmetricKey
         )
         
@@ -100,7 +91,7 @@ public final class SecretService: Sendable {
             session: session,
             parameters: iv,
             value: encryptedValue,
-            contentType: contentType
+            contentType: secret.contentType
         )
         
         let request = DBusRequest.createMethodCall(
@@ -120,7 +111,30 @@ public final class SecretService: Sendable {
         return try response.decodeCreateItem()
     }
     
-    static func withDefaultConnection<R: Sendable>(
+    /// Retrieve multiple secrets from different items at once
+    public func getSecrets(
+        items: [String],
+        collection: String
+    ) async throws(SecSError) -> [String: Secret] {
+        let (session, symmetricKey) = try getSession()
+        
+        let request = DBusRequest.createMethodCall(
+            destination: SecS.service,
+            path: SecS.service.asDBusPath,
+            interface: SecS.Iface.service,
+            method: "GetSecrets",
+            body: [
+                .array(items.asDBusObjectPathArray),
+                .objectPath(session)
+            ]
+        )
+        
+        guard let response = try await send(request) else { throw .noResponse }
+        
+        return try response.decodeGetSecrets(with: symmetricKey)
+    }
+    
+    public static func withDefaultConnection<R: Sendable>(
         _ block: @escaping @Sendable (DBusServerConnection) async throws -> R
     ) async throws -> R {
         return try await DBusClient.withSessionBus(auth: .external(userID: "\(getuid().description)")) { connection in
@@ -129,11 +143,24 @@ public final class SecretService: Sendable {
     }
     
     /// Sends the request on the current connection and converts errors
-    func send(_ request: DBusRequest) async throws(SecretServiceError) -> DBusMessage? {
+    private func send(_ request: DBusRequest) async throws(SecretServiceError) -> DBusMessage? {
         do {
             return try await connection.send(request)
         } catch {
             throw .sendingFailed(error)
+        }
+    }
+    
+    private func getSession() throws(SecSError) -> (session: String, key: [UInt8]) {
+        return try sessionData.withLock { data throws(SecSError) in
+            guard
+                let session = data.sessionPath,
+                let symmetricKey = data.symmetricKey
+            else {
+                throw .noActiveSession
+            }
+            
+            return (session, symmetricKey)
         }
     }
 }

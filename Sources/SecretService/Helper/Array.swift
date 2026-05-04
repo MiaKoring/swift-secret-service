@@ -23,7 +23,16 @@ extension Array where Element == UInt8 {
     /// Converts to [DBusValue.byte]
     var asDBusByteArray: [DBusValue] {
         self.map { byte in
-                .byte(byte)
+            .byte(byte)
+        }
+    }
+}
+
+extension Array where Element == String {
+    /// Converts to [DBusValue.objectPath]
+    var asDBusObjectPathArray: [DBusValue] {
+        self.map { path in
+            .objectPath(path)
         }
     }
 }

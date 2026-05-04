@@ -1,8 +1,8 @@
 import CryptoSwift
 
-typealias SecSError = SecretServiceError
+public typealias SecSError = SecretServiceError
 
-enum SecretServiceError: Error {
+public enum SecretServiceError: Error {
     // MARK: - DBus Request
     case sendingFailed(Error)
     
