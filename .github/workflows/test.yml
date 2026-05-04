@@ -36,4 +36,3 @@ jobs:
             echo "test" | gnome-keyring-daemon --unlock --components=secrets
             RUN_INTEGRATION_TESTS=1 swift test --parallel -Xcc -I/usr/include -Xlinker -L/usr/lib
           '
-          '
