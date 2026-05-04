@@ -138,9 +138,7 @@ public final class SecretService: Sendable {
     public func searchItems(
         for attributes: [String: String],
         in collection: String
-    ) async throws(SecSError) -> [String] {
-        let (session, _) = try getSession()
-        
+    ) async throws(SecSError) -> [String] {        
         let request = DBusRequest.createMethodCall(
             destination: SecS.service,
             path: collection,
@@ -161,8 +159,6 @@ public final class SecretService: Sendable {
     public func deleteItem(
         item: String
     ) async throws(SecSError) -> String? {
-        let (session, _) = try getSession()
-        
         let request = DBusRequest.createMethodCall(
             destination: SecS.service,
             path: item,

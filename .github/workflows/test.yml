@@ -1,6 +1,8 @@
 name: Integration Tests (D-Bus & Secret Service)
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
 

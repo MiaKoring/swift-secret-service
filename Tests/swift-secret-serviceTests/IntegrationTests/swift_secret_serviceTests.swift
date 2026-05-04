@@ -96,7 +96,7 @@ class IntegrationTests {
         )
         
         for item in items {
-            let prompt = try await service.deleteItem(item: item)
+            _ = try await service.deleteItem(item: item)
         }
     }
 }

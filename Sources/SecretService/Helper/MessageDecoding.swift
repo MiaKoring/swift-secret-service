@@ -99,7 +99,7 @@ extension DBusMessage {
         } else if case .error = self.messageType {
             throw .returnedError(body[0, nil]?.string)
         } else {
-            throw .unexpectedResponse(for: "SearchItems")
+            throw .unexpectedResponse(for: "Items.Delete")
         }
     }
 }
