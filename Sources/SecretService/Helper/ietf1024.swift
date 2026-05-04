@@ -37,6 +37,10 @@ FFFFFFFF FFFFFFFF
     func aesKey(with otherPublicKey: [UInt8]) throws(SecSError) -> [UInt8] {
         let bobPublic = BigUInt(Data(otherPublicKey))
         
+        guard isValidPublicKey(bobPublic, p: Self.p) else {
+            throw .diffieHellmanFailed(Error.recievedPublicKeyInsecure)
+        }
+        
         let sharedSecret = bobPublic.power(privateKey, modulus: Self.p)
         
         do {
@@ -50,5 +54,18 @@ FFFFFFFF FFFFFFFF
         } catch {
             throw .diffieHellmanFailed(error)
         }
+    }
+    
+    func isValidPublicKey(_ otherPublicKey: BigUInt, p: BigUInt) -> Bool {
+        // 1. Must be greater than 1
+        // 2. Must be less than p - 1
+        let lowerBound = BigInt(1)
+        let upperBound = p - 1
+        
+        return otherPublicKey > lowerBound && otherPublicKey < upperBound
+    }
+    
+    enum Error: Swift.Error {
+        case recievedPublicKeyInsecure
     }
 }
