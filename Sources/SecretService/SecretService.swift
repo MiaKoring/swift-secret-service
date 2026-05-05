@@ -29,7 +29,9 @@ public final class SecretService: Sendable {
         var sessionPath: String?
     }
     
-    /// Start a session
+    /// Starts an encrypted session using dh-ietf1024-sha256-aes128-cbc-pkcs7
+    ///
+    /// org.freedesktop.Secret.Service.OpenSession
     public func connect() async throws(SecSError) {
         let dh = IETF1024DH()
         
@@ -58,6 +60,8 @@ public final class SecretService: Sendable {
     }
     
     /// Get the collection for the given alias
+    ///
+    /// org.freedesktop.Secret.Service.ReadAlias
     public func readAlias(_ name: String = "default") async throws(SecSError) -> String? {
         let request = DBusRequest.createMethodCall(
             destination: SecS.service,
@@ -75,6 +79,8 @@ public final class SecretService: Sendable {
     }
     
     /// Stores a secret
+    ///
+    /// org.freedesktop.Secret.Collection.CreateItem
     public func createItem(
         secret: Secret,
         collection: String,
@@ -112,6 +118,8 @@ public final class SecretService: Sendable {
     }
     
     /// Retrieve multiple secrets from different items at once
+    ///
+    /// org.freedesktop.Secret.Service.GetSecrets
     public func getSecrets(
         items: [String],
         collection: String
@@ -135,10 +143,12 @@ public final class SecretService: Sendable {
     }
     
     /// Search for items with certain attributes in the collection
+    ///
+    /// org.freedesktop.Secret.Collection.SearchItems
     public func searchItems(
         for attributes: [String: String],
         in collection: String
-    ) async throws(SecSError) -> [String] {        
+    ) async throws(SecSError) -> [String] {
         let request = DBusRequest.createMethodCall(
             destination: SecS.service,
             path: collection,
@@ -156,6 +166,8 @@ public final class SecretService: Sendable {
     
     /// Deletes an item
     /// Returns prompt object or nil if no prompt is necessary
+    ///
+    /// org.freedesktop.Secret.Item.Delete
     public func deleteItem(
         item: String
     ) async throws(SecSError) -> String? {
@@ -169,6 +181,65 @@ public final class SecretService: Sendable {
         guard let response = try await send(request) else { throw .noResponse }
         
         return try response.decodeDeleteItem()
+    }
+    
+    /// Sets a secret on an item
+    ///
+    /// org.freedesktop.Secret.Item.SetSecret
+    public func setSecret(
+        on item: String,
+        secret: Secret
+    ) async throws(SecSError) {
+        let (session, symmetricKey) = try getSession()
+        
+        let (encryptedValue, iv) = try AES.encryptAES128PKCS7(
+            data: secret.value,
+            key: symmetricKey
+        )
+        
+        let secret = DBusValue.secret(
+            session: session,
+            parameters: iv,
+            value: encryptedValue,
+            contentType: secret.contentType
+        )
+        
+        let request = DBusRequest.createMethodCall(
+            destination: SecS.service,
+            path: item,
+            interface: SecS.Iface.item,
+            method: "SetSecret",
+            body: [
+                secret
+            ]
+        )
+        
+        guard let response = try await send(request) else { throw .noResponse }
+        
+        if response.messageType == .error {
+            throw .returnedError(response.body[0, nil]?.string)
+        }
+    }
+    
+    /// Gets the secret of an item
+    ///
+    /// org.freedesktop.Secret.Item.GetSecret
+    public func getSecret(of item: String) async throws(SecSError) -> Secret {
+        let (session, symmetricKey) = try getSession()
+        
+        let request = DBusRequest.createMethodCall(
+            destination: SecS.service,
+            path: item,
+            interface: SecS.Iface.item,
+            method: "GetSecret",
+            body: [
+                .objectPath(session)
+            ]
+        )
+        
+        guard let response = try await send(request) else { throw .noResponse }
+        
+        return try response.decodeGetSecret(with: symmetricKey)
     }
     
     public static func withDefaultConnection<R: Sendable>(

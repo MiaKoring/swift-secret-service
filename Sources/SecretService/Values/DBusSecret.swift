@@ -33,6 +33,14 @@ extension DBusValue {
         }
         return result
     }
+    
+    var secret: DBusSecret? {
+        switch self {
+            case .structure(let array):
+                return DBusSecret(structure: array)
+            default: return nil
+        }
+    }
 }
 
 public struct Secret: Sendable {

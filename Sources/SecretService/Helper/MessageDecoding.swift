@@ -70,7 +70,6 @@ extension DBusMessage {
         } else if case .error = self.messageType {
             throw .returnedError(body[0, nil]?.string)
         } else {
-            print(self.body)
             throw .unexpectedResponse(for: "GetSecrets")
         }
     }
@@ -100,6 +99,28 @@ extension DBusMessage {
             throw .returnedError(body[0, nil]?.string)
         } else {
             throw .unexpectedResponse(for: "Items.Delete")
+        }
+    }
+    
+    func decodeGetSecret(with symmetricKey: [UInt8]) throws(SecSError) -> Secret {
+        if
+            case .methodReturn = messageType,
+            body.count >= 1,
+            let secret = body[0].secret
+        {
+            var result = [String: Secret]()
+            
+            let decrypted = try AES.decryptAES128PKCS7(
+                encryptedData: secret.value,
+                iv: secret.parameters,
+                key: symmetricKey
+            )
+            
+            return Secret(value: decrypted, contentType: secret.contentType)
+        } else if case .error = self.messageType {
+            throw .returnedError(body[0, nil]?.string)
+        } else {
+            throw .unexpectedResponse(for: "GetSecret")
         }
     }
 }
