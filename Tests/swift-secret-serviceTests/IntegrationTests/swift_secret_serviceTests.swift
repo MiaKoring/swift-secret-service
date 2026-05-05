@@ -149,7 +149,7 @@ class IntegrationTests {
                 return
             }
             
-            let prompt = try await service.deleteCollection(collection)
+            _ = try await service.deleteCollection(collection)
             
             // TODO: handle prompts
         }

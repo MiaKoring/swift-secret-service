@@ -63,9 +63,9 @@ public final class SecretService: Sendable {
     /// - Parameters:
     ///   - properties: Properties for the collection, e.g. a label
     ///   - alias:
-    ///   If creating this connection for a well known alias then a string like default. If an collection with this well-known alias already exists, then that collection will be returned instead of creating a new collection. Any readwrite properties provided to this function will be set on the collection.
+    ///   If creating this collection for a well known alias then a string like default. If an collection with this well-known alias already exists, then that collection will be returned instead of creating a new collection. Any readwrite properties provided to this function will be set on the collection.
     ///
-    ///   Set this to an empty string if the new collection should not be associated with a well known alias.
+    ///   Set this to nil if the new collection should not be associated with a well known alias.
     /// - Returns:
     ///   - ObjectPath to collection
     ///   - Prompt (only needs to be invoked when item is nil)
@@ -77,7 +77,7 @@ public final class SecretService: Sendable {
     public func createCollection(
         properties: [String: DBusValue],
         alias: String?
-    ) async throws (SecSError) -> (collection: String?, prompt: String?) {
+    ) async throws(SecSError) -> (collection: String?, prompt: String?) {
         let request = DBusRequest.createMethodCall(
             destination: SecS.service,
             path: SecS.service.asDBusPath,

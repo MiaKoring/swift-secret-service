@@ -22,7 +22,7 @@ extension SecretService {
         
         guard let response = try await send(request) else { throw .noResponse }
         
-        return try response.decodeDeleteItem()
+        return try response.decodeDelete()
     }
     
     /// Sets a secret on an item

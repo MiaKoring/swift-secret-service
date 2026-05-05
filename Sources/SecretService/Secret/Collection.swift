@@ -12,7 +12,16 @@ extension SecretService {
     public func deleteCollection(
         _ collection: String
     ) async throws(SecSError) -> String? {
-        return ""
+        let request = DBusRequest.createMethodCall(
+            destination: SecS.service,
+            path: collection,
+            interface: SecS.Iface.collection,
+            method: "Delete"
+        )
+        
+        guard let response = try await send(request) else { throw .noResponse }
+        
+        return try response.decodeDelete()
     }
     
     /// Search for items with certain attributes in the collection

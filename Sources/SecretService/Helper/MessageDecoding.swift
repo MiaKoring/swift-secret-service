@@ -94,7 +94,7 @@ extension DBusMessage {
         }
     }
     
-    func decodeDeleteItem() throws(SecSError) -> String? {
+    func decodeDelete() throws(SecSError) -> String? {
         if
             case .methodReturn = self.messageType,
             body.count >= 1,
@@ -104,7 +104,7 @@ extension DBusMessage {
         } else if case .error = self.messageType {
             throw .returnedError(body[0, nil]?.string)
         } else {
-            throw .unexpectedResponse(for: "Items.Delete")
+            throw .unexpectedResponse(for: "Delete")
         }
     }
     
@@ -114,8 +114,6 @@ extension DBusMessage {
             body.count >= 1,
             let secret = body[0].secret
         {
-            var result = [String: Secret]()
-            
             let decrypted = try AES.decryptAES128PKCS7(
                 encryptedData: secret.value,
                 iv: secret.parameters,
