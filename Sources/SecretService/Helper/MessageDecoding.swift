@@ -49,6 +49,12 @@ extension DBusMessage {
         }
     }
     
+    func decodeCreateCollection() throws(SecSError) -> (collection: String?, prompt: String?) {
+        // functionally the same as createItem
+        let decoded = try self.decodeCreateItem()
+        return (collection: decoded.item, prompt: decoded.prompt)
+    }
+    
     func decodeGetSecrets(with symmetricKey: [UInt8]) throws(SecSError) -> [String: Secret] {
         if
             case .methodReturn = messageType,

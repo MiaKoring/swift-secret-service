@@ -4,6 +4,7 @@ import DBUS
 import CryptoSwift
 @testable import SecretService
 
+@Suite(.serialized)
 class IntegrationTests {
     /// Integration tests should set this attribute as string to "1" on temporarily created items
     /// If items are created, the test function should call teardown as last statement in the withDefaultConnection closure
@@ -132,6 +133,28 @@ class IntegrationTests {
         }
     }
     
+    @Test(.enabled(if: ProcessInfo.runIntegrationTests && ProcessInfo.doPrompting))
+    func testCreateDeleteCollection() async throws {
+        try await SecretService.withDefaultConnection { connection in
+            let service = SecretService(connection: connection)
+            try await service.connect()
+            
+            let result = try await service.createCollection(
+                properties: [:],
+                alias: ""
+            )
+            
+            guard let collection = result.collection else {
+                Issue.record("Collection was nil prompting might be needed")
+                return
+            }
+            
+            let prompt = try await service.deleteCollection(collection)
+            
+            // TODO: handle prompts
+        }
+    }
+    
     static func teardown(collection: String, service: SecretService) async throws {
         let items = try await service.searchItems(
             for: [Self.teardownDeleteAttributeName: "1"],
@@ -147,5 +170,10 @@ class IntegrationTests {
 extension ProcessInfo {
     static var runIntegrationTests: Bool {
         ProcessInfo.processInfo.environment["RUN_INTEGRATION_TESTS"] == "1"
+    }
+    
+    /// Use to only run a test in an environment supporting prompting.
+    static var doPrompting: Bool {
+        ProcessInfo.processInfo.environment["EVALUATE_PROMPTS"] == "1"
     }
 }

@@ -43,6 +43,8 @@ extension DBusValue {
     }
 }
 
+/// The unencrypted representation of a Secret.
+/// ``SecretService`` automatically manages encryption in transit.
 public struct Secret: Sendable {
     /// The unencrypted Data of the secret as byte array
     let value: [UInt8]
