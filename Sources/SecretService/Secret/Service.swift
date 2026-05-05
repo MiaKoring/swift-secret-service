@@ -3,7 +3,7 @@ import Foundation
 import CryptoSwift
 import Synchronization
 
-private enum SecS {
+enum SecS {
     static let service = "org.freedesktop.secrets"
     static let transferProtocol = "dh-ietf1024-sha256-aes128-cbc-pkcs7"
     
@@ -29,13 +29,14 @@ public final class SecretService: Sendable {
         var sessionPath: String?
     }
     
-    /// Start a session
+    /// Starts an encrypted session using dh-ietf1024-sha256-aes128-cbc-pkcs7
+    ///
+    /// org.freedesktop.Secret.Service.OpenSession
     public func connect() async throws(SecSError) {
         let dh = IETF1024DH()
         
         let dbusPublicKey = dh.publicKey.map { DBusValue.byte($0) }
         
-        // Method signature: OpenSession(String algorithm, Variant input) -> (Variant output, ObjectPath result)
         let request = DBusRequest.createMethodCall(
             destination: SecS.service,
             path: SecS.service.asDBusPath,
@@ -57,7 +58,51 @@ public final class SecretService: Sendable {
         }
     }
     
+    /// Creates a new collection.
+    ///
+    /// - Parameters:
+    ///   - properties: Properties for the collection, e.g. a label
+    ///   - alias:
+    ///   If creating this collection for a well known alias then a string like default. If an collection with this well-known alias already exists, then that collection will be returned instead of creating a new collection. Any readwrite properties provided to this function will be set on the collection.
+    ///
+    ///   Set this to nil if the new collection should not be associated with a well known alias.
+    /// - Returns:
+    ///   - ObjectPath to collection
+    ///   - Prompt (only needs to be invoked when item is nil)
+    ///
+    /// Use of default collection (returned by ``SecretService/readAlias(_:)``) is recommended for most cases.
+    /// Ubuntu 26.04 for example only supports the default alias.
+    ///
+    /// org.freedesktop.Secret.Service.CreateCollection
+    public func createCollection(
+        properties: [String: DBusValue],
+        alias: String?
+    ) async throws(SecSError) -> (collection: String?, prompt: String?) {
+        let request = DBusRequest.createMethodCall(
+            destination: SecS.service,
+            path: SecS.service.asDBusPath,
+            interface: SecS.Iface.service,
+            method: "CreateCollection",
+            body: [
+                .dictionary(properties.asStringToVariant),
+                .string(alias ?? "")
+            ]
+        )
+        
+        guard let response = try await send(request) else { throw .noResponse }
+        
+        return try response.decodeCreateCollection()
+    }
+    
     /// Get the collection for the given alias
+    /// - Parameters:
+    ///   - name: The alias you want to get the collection for
+    /// - Returns:
+    ///   - The ObjectPath of the requested collection or nil if it doesn't exist
+    ///
+    /// Some SecretService implementations (for example Ubuntu 26.04's) might only support default
+    ///
+    /// org.freedesktop.Secret.Service.ReadAlias
     public func readAlias(_ name: String = "default") async throws(SecSError) -> String? {
         let request = DBusRequest.createMethodCall(
             destination: SecS.service,
@@ -74,44 +119,14 @@ public final class SecretService: Sendable {
         return try response.decodeReadAlias()
     }
     
-    /// Stores a secret
-    public func createItem(
-        secret: Secret,
-        collection: String,
-        properties: [String: DBusValue]
-    ) async throws(SecSError) -> (item: String?, prompt: String?) {
-        let (session, symmetricKey) = try getSession()
-        
-        let (encryptedValue, iv) = try AES.encryptAES128PKCS7(
-            data: secret.value,
-            key: symmetricKey
-        )
-        
-        let secret = DBusValue.secret(
-            session: session,
-            parameters: iv,
-            value: encryptedValue,
-            contentType: secret.contentType
-        )
-        
-        let request = DBusRequest.createMethodCall(
-            destination: SecS.service,
-            path: collection,
-            interface: SecS.Iface.collection,
-            method: "CreateItem",
-            body: [
-                .dictionary(properties.asStringToVariant),
-                secret,
-                .boolean(true)
-            ]
-        )
-        
-        guard let response = try await send(request) else { throw .noResponse }
-        
-        return try response.decodeCreateItem()
-    }
-    
     /// Retrieve multiple secrets from different items at once
+    /// - Parameters:
+    ///   - items: Array of ObjectPaths of the items to get the ``Secret``s for
+    ///   - collection: The ObjectPath of the collection to search in
+    /// - Returns:
+    ///   - Dictionary of item ObjectPath to Secret
+    ///
+    /// org.freedesktop.Secret.Service.GetSecrets
     public func getSecrets(
         items: [String],
         collection: String
@@ -134,53 +149,8 @@ public final class SecretService: Sendable {
         return try response.decodeGetSecrets(with: symmetricKey)
     }
     
-    /// Search for items with certain attributes in the collection
-    public func searchItems(
-        for attributes: [String: String],
-        in collection: String
-    ) async throws(SecSError) -> [String] {        
-        let request = DBusRequest.createMethodCall(
-            destination: SecS.service,
-            path: collection,
-            interface: SecS.Iface.collection,
-            method: "SearchItems",
-            body: [
-                .dictionary(attributes.asStringToString)
-            ]
-        )
-        
-        guard let response = try await send(request) else { throw .noResponse }
-        
-        return try response.decodeSearchItems()
-    }
-    
-    /// Deletes an item
-    /// Returns prompt object or nil if no prompt is necessary
-    public func deleteItem(
-        item: String
-    ) async throws(SecSError) -> String? {
-        let request = DBusRequest.createMethodCall(
-            destination: SecS.service,
-            path: item,
-            interface: SecS.Iface.item,
-            method: "Delete",
-        )
-        
-        guard let response = try await send(request) else { throw .noResponse }
-        
-        return try response.decodeDeleteItem()
-    }
-    
-    public static func withDefaultConnection<R: Sendable>(
-        _ block: @escaping @Sendable (DBusServerConnection) async throws -> R
-    ) async throws -> R {
-        return try await DBusClient.withSessionBus(auth: .external(userID: "\(getuid().description)")) { connection in
-            return try await block(connection)
-        }
-    }
-    
     /// Sends the request on the current connection and converts errors
-    private func send(_ request: DBusRequest) async throws(SecSError) -> DBusMessage? {
+    func send(_ request: DBusRequest) async throws(SecSError) -> DBusMessage? {
         do {
             return try await connection.send(request)
         } catch {
@@ -188,7 +158,7 @@ public final class SecretService: Sendable {
         }
     }
     
-    private func getSession() throws(SecSError) -> (session: String, key: [UInt8]) {
+    func getSession() throws(SecSError) -> (session: String, key: [UInt8]) {
         return try sessionData.withLock { data throws(SecSError) in
             guard
                 let session = data.sessionPath,
@@ -198,6 +168,14 @@ public final class SecretService: Sendable {
             }
             
             return (session, symmetricKey)
+        }
+    }
+    
+    public static func withDefaultConnection<R: Sendable>(
+        _ block: @escaping @Sendable (DBusServerConnection) async throws -> R
+    ) async throws -> R {
+        return try await DBusClient.withSessionBus(auth: .external(userID: "\(getuid().description)")) { connection in
+            return try await block(connection)
         }
     }
 }

@@ -4,9 +4,10 @@ import DBUS
 import CryptoSwift
 @testable import SecretService
 
+@Suite(.serialized)
 class IntegrationTests {
     /// Integration tests should set this attribute as string to "1" on temporarily created items
-    /// They will be deleted in deinit in the future
+    /// If items are created, the test function should call teardown as last statement in the withDefaultConnection closure
     static let teardownDeleteAttributeName = "swift-secret-service-delete-on-teardown"
     
     @Test(.enabled(if: ProcessInfo.runIntegrationTests))
@@ -23,7 +24,6 @@ class IntegrationTests {
             let service = SecretService(connection: connection)
             let alias = try await service.readAlias()
             
-            //print(alias ?? "No collection for the given alias")
             #expect(alias != nil)
         }
     }
@@ -55,11 +55,6 @@ class IntegrationTests {
                 properties: properties
             )
             
-            /*
-             print("item: \(item ?? "[no item]")")
-             print("prompt: \(item ?? "[no prompt required]")")
-             */
-            
             guard let item else {
                 Issue.record("Item is unexpectedly nil")
                 return
@@ -89,6 +84,77 @@ class IntegrationTests {
         }
     }
     
+    @Test(.enabled(if: ProcessInfo.runIntegrationTests))
+    func testGetSetSecret() async throws {
+        try await SecretService.withDefaultConnection { connection in
+            let service = SecretService(connection: connection)
+            try await service.connect()
+            
+            guard let collection = try await service.readAlias() else {
+                Issue.record("no default collection found")
+                return
+            }
+            
+            let secret = "test123"
+            
+            let properties: [String: DBusValue] = [
+                "org.freedesktop.Secret.Item.Label": .string("test"),
+                "org.freedesktop.Secret.Item.Attributes": .dictionary([
+                    .string("service"): .string("de.amethystsoft.swift-secret-service.tests"),
+                    .string(Self.teardownDeleteAttributeName): .string("1")
+                ])
+            ]
+            
+            let (item, _) = try await service.createItem(
+                secret: Secret(value: secret.bytes),
+                collection: collection,
+                properties: properties
+            )
+            
+            guard let item else {
+                Issue.record("Item is unexpectedly nil")
+                return
+            }
+            
+            let returnedSecret = try await service.getSecret(of: item)
+            #expect(returnedSecret.value == secret.bytes)
+            
+            let newSecret = "newSecret"
+            
+            try await service.setSecret(
+                on: item,
+                secret: Secret(value: newSecret.bytes)
+            )
+            
+            let newReturnedSecret = try await service.getSecret(of: item)
+            #expect(newReturnedSecret.value == newSecret.bytes)
+            
+            try await Self.teardown(collection: collection, service: service)
+        }
+    }
+    
+    @Test(.enabled(if: ProcessInfo.runIntegrationTests && ProcessInfo.doPrompting))
+    func testCreateDeleteCollection() async throws {
+        try await SecretService.withDefaultConnection { connection in
+            let service = SecretService(connection: connection)
+            try await service.connect()
+            
+            let result = try await service.createCollection(
+                properties: [:],
+                alias: ""
+            )
+            
+            guard let collection = result.collection else {
+                Issue.record("Collection was nil prompting might be needed")
+                return
+            }
+            
+            _ = try await service.deleteCollection(collection)
+            
+            // TODO: handle prompts
+        }
+    }
+    
     static func teardown(collection: String, service: SecretService) async throws {
         let items = try await service.searchItems(
             for: [Self.teardownDeleteAttributeName: "1"],
@@ -104,5 +170,10 @@ class IntegrationTests {
 extension ProcessInfo {
     static var runIntegrationTests: Bool {
         ProcessInfo.processInfo.environment["RUN_INTEGRATION_TESTS"] == "1"
+    }
+    
+    /// Use to only run a test in an environment supporting prompting.
+    static var doPrompting: Bool {
+        ProcessInfo.processInfo.environment["EVALUATE_PROMPTS"] == "1"
     }
 }

@@ -33,8 +33,18 @@ extension DBusValue {
         }
         return result
     }
+    
+    var secret: DBusSecret? {
+        switch self {
+            case .structure(let array):
+                return DBusSecret(structure: array)
+            default: return nil
+        }
+    }
 }
 
+/// The unencrypted representation of a Secret.
+/// ``SecretService`` automatically manages encryption in transit.
 public struct Secret: Sendable {
     /// The unencrypted Data of the secret as byte array
     let value: [UInt8]

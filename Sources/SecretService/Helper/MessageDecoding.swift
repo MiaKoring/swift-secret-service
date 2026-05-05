@@ -49,6 +49,12 @@ extension DBusMessage {
         }
     }
     
+    func decodeCreateCollection() throws(SecSError) -> (collection: String?, prompt: String?) {
+        // functionally the same as createItem
+        let decoded = try self.decodeCreateItem()
+        return (collection: decoded.item, prompt: decoded.prompt)
+    }
+    
     func decodeGetSecrets(with symmetricKey: [UInt8]) throws(SecSError) -> [String: Secret] {
         if
             case .methodReturn = messageType,
@@ -70,7 +76,6 @@ extension DBusMessage {
         } else if case .error = self.messageType {
             throw .returnedError(body[0, nil]?.string)
         } else {
-            print(self.body)
             throw .unexpectedResponse(for: "GetSecrets")
         }
     }
@@ -89,7 +94,7 @@ extension DBusMessage {
         }
     }
     
-    func decodeDeleteItem() throws(SecSError) -> String? {
+    func decodeDelete() throws(SecSError) -> String? {
         if
             case .methodReturn = self.messageType,
             body.count >= 1,
@@ -99,7 +104,27 @@ extension DBusMessage {
         } else if case .error = self.messageType {
             throw .returnedError(body[0, nil]?.string)
         } else {
-            throw .unexpectedResponse(for: "Items.Delete")
+            throw .unexpectedResponse(for: "Delete")
+        }
+    }
+    
+    func decodeGetSecret(with symmetricKey: [UInt8]) throws(SecSError) -> Secret {
+        if
+            case .methodReturn = messageType,
+            body.count >= 1,
+            let secret = body[0].secret
+        {
+            let decrypted = try AES.decryptAES128PKCS7(
+                encryptedData: secret.value,
+                iv: secret.parameters,
+                key: symmetricKey
+            )
+            
+            return Secret(value: decrypted, contentType: secret.contentType)
+        } else if case .error = self.messageType {
+            throw .returnedError(body[0, nil]?.string)
+        } else {
+            throw .unexpectedResponse(for: "GetSecret")
         }
     }
 }
