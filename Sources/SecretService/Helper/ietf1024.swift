@@ -24,7 +24,7 @@ FFFFFFFF FFFFFFFF
     
     init() {
         // Just using randomIV as RNG
-        let hexPrivateKey = Data(AES.randomIV(128)).toHexString()
+        let hexPrivateKey = Data(AES.randomIV(16)).toHexString()
         
         // Should be safe to force unwrap, only returns nil on empty String
         let privateKey = BigUInt(hexPrivateKey, radix: 16)!

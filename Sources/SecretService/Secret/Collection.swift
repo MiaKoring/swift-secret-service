@@ -1,6 +1,7 @@
 import DBUS
 import CryptoSwift
 
+// Method implementation complete
 extension SecretService {
     /// Delete a collection
     /// - Parameters:

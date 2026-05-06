@@ -31,7 +31,7 @@ extension DBusMessage {
         }
     }
     
-    func decodeCreateItem() throws(SecSError) -> (item: String?, prompt: String?) {
+    func decodeCreateItem(_ function: String = "CreateItem") throws(SecSError) -> (item: String?, prompt: String?) {
         if
             case .methodReturn = self.messageType,
             body.count >= 2,
@@ -45,13 +45,13 @@ extension DBusMessage {
         } else if case .error = self.messageType {
             throw .returnedError(body[0, nil]?.string)
         } else {
-            throw .unexpectedResponse(for: "CreateItem")
+            throw .unexpectedResponse(for: function)
         }
     }
     
     func decodeCreateCollection() throws(SecSError) -> (collection: String?, prompt: String?) {
         // functionally the same as createItem
-        let decoded = try self.decodeCreateItem()
+        let decoded = try self.decodeCreateItem("CreateCollection")
         return (collection: decoded.item, prompt: decoded.prompt)
     }
     
@@ -126,5 +126,27 @@ extension DBusMessage {
         } else {
             throw .unexpectedResponse(for: "GetSecret")
         }
+    }
+    
+    func decodeLock(
+        _ function: String = "Lock"
+    ) throws(SecSError) -> (locked: [String], prompt: String?) {
+        if
+            case .methodReturn = messageType,
+            body.count >= 2,
+            let locked = body[0].array?.asObjectPathArray,
+            let prompt = body[1].objectPath
+        {
+            return (locked: locked, prompt: prompt != "/" ? prompt: nil)
+        } else if case .error = self.messageType {
+            throw .returnedError(body[0, nil]?.string)
+        } else {
+            throw .unexpectedResponse(for: function)
+        }
+    }
+    
+    func decodeUnlock() throws(SecSError) -> (unlocked: [String], prompt: String?) {
+        let result = try self.decodeLock("Unlock")
+        return (unlocked: result.locked, prompt: result.prompt)
     }
 }
