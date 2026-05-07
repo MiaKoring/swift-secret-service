@@ -12,13 +12,19 @@ enum SecS {
         static let collection = "org.freedesktop.Secret.Collection"
         static let item       = "org.freedesktop.Secret.Item"
         static let session    = "org.freedesktop.Secret.Session"
+        static let prompt     = "org.freedesktop.Secret.Prompt"
     }
 }
 
+// Method implementation complete
 public final class SecretService: Sendable {
     private let sessionData = Mutex(InternalData())
     
-    private let connection: DBusServerConnection
+    let connection: DBusServerConnection
+    
+    var dbusClientConnection: DBusClient.Connection {
+        connection as! DBusClient.Connection
+    }
     
     public init(connection: DBusServerConnection) {
         self.connection = connection
@@ -73,6 +79,8 @@ public final class SecretService: Sendable {
     /// Use of default collection (returned by ``SecretService/readAlias(_:)``) is recommended for most cases.
     /// Ubuntu 26.04 for example only supports the default alias.
     ///
+    /// Prompt result should be a single ObjectPath.
+    ///
     /// org.freedesktop.Secret.Service.CreateCollection
     public func createCollection(
         properties: [String: DBusValue],
@@ -94,29 +102,62 @@ public final class SecretService: Sendable {
         return try response.decodeCreateCollection()
     }
     
-    /// Get the collection for the given alias
+    /// Unlocks the specified objects
+    ///
     /// - Parameters:
-    ///   - name: The alias you want to get the collection for
+    ///   - objects: Array of ObjectPaths of the objects to unlock
     /// - Returns:
-    ///   - The ObjectPath of the requested collection or nil if it doesn't exist
+    ///   - Array of ObjectPaths of Objects that were unlocked without a prompt
+    ///   - ObjectPath to a prompt to unlock the remaining items or nil if no prompt is required
     ///
-    /// Some SecretService implementations (for example Ubuntu 26.04's) might only support default
+    /// Prompt result should be an array of ObjectPaths.
     ///
-    /// org.freedesktop.Secret.Service.ReadAlias
-    public func readAlias(_ name: String = "default") async throws(SecSError) -> String? {
+    /// org.freedesktop.Secret.Service.Unlock
+    public func unlock(
+        objects: [String]
+    ) async throws(SecSError) -> (unlocked: [String], prompt: String?) {
         let request = DBusRequest.createMethodCall(
             destination: SecS.service,
             path: SecS.service.asDBusPath,
             interface: SecS.Iface.service,
-            method: "ReadAlias",
+            method: "Unlock",
             body: [
-                .string(name)
+                .array(objects.asDBusObjectPathArray)
             ]
         )
         
         guard let response = try await send(request) else { throw .noResponse }
         
-        return try response.decodeReadAlias()
+        return try response.decodeUnlock()
+    }
+    
+    /// Locks the specified objects
+    ///
+    /// - Parameters:
+    ///   - objects: Array of ObjectPaths of the objects to lock
+    /// - Returns:
+    ///   - Array of ObjectPaths of Objects that were locked without a prompt
+    ///   - ObjectPath to a prompt to lock the remaining items or nil if no prompt is required
+    ///
+    /// Prompt result should be an array of ObjectPaths.
+    ///
+    /// org.freedesktop.Secret.Service.Lock
+    public func lock(
+        objects: [String]
+    ) async throws(SecSError) -> (locked: [String], prompt: String?) {
+        let request = DBusRequest.createMethodCall(
+            destination: SecS.service,
+            path: SecS.service.asDBusPath,
+            interface: SecS.Iface.service,
+            method: "Lock",
+            body: [
+                .array(objects.asDBusObjectPathArray)
+            ]
+        )
+        
+        guard let response = try await send(request) else { throw .noResponse }
+        
+        return try response.decodeLock()
     }
     
     /// Retrieve multiple secrets from different items at once
@@ -147,6 +188,63 @@ public final class SecretService: Sendable {
         guard let response = try await send(request) else { throw .noResponse }
         
         return try response.decodeGetSecrets(with: symmetricKey)
+    }
+    
+    /// Get the collection for the given alias
+    /// - Parameters:
+    ///   - name: The alias you want to get the collection for
+    /// - Returns:
+    ///   - The ObjectPath of the requested collection or nil if it doesn't exist
+    ///
+    /// Some SecretService implementations (for example Ubuntu 26.04's) might only support default
+    ///
+    /// org.freedesktop.Secret.Service.ReadAlias
+    public func readAlias(_ name: String = "default") async throws(SecSError) -> String? {
+        let request = DBusRequest.createMethodCall(
+            destination: SecS.service,
+            path: SecS.service.asDBusPath,
+            interface: SecS.Iface.service,
+            method: "ReadAlias",
+            body: [
+                .string(name)
+            ]
+        )
+        
+        guard let response = try await send(request) else { throw .noResponse }
+        
+        return try response.decodeReadAlias()
+    }
+    
+    /// Sets the alias for the given collection
+    /// - Parameters:
+    ///   - name: The alias you want to set for the collection.
+    ///   - collection: The ObjectPath of the collection.
+    ///
+    /// Some SecretService implementations (for example Ubuntu 26.04's) might only support default
+    ///
+    /// org.freedesktop.Secret.Service.SetAlias
+    public func setAlias(
+        _ name: String,
+        collection: String
+    ) async throws(SecSError) {
+        let request = DBusRequest.createMethodCall(
+            destination: SecS.service,
+            path: SecS.service.asDBusPath,
+            interface: SecS.Iface.service,
+            method: "SetAlias",
+            body: [
+                .string(name),
+                .objectPath(collection)
+            ]
+        )
+        
+        guard let response = try await send(request) else { throw .noResponse }
+        
+        guard
+            response.messageType != .error
+        else {
+            throw .returnedError(response.body[0, nil]?.string)
+        }
     }
     
     /// Sends the request on the current connection and converts errors

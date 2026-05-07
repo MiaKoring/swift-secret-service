@@ -1,12 +1,15 @@
 import DBUS
 import CryptoSwift
 
+// Method implementation complete
 extension SecretService {
     /// Delete a collection
     /// - Parameters:
     ///   - collection: The objectPath of the collection
     /// - Returns:
     ///   - ObjectPath to the Prompt item
+    ///
+    /// Prompt result should be a single ObjectPath.
     ///
     /// org.freedesktop.Secret.Collection.Delete
     public func deleteCollection(
@@ -59,6 +62,8 @@ extension SecretService {
     /// - Returns:
     ///   - ObjectPath to item
     ///   - Prompt (only needs to be invoked when item is nil)
+    ///
+    /// Prompt result should be a single ObjectPath to the item.
     ///
     /// org.freedesktop.Secret.Collection.CreateItem
     public func createItem(
