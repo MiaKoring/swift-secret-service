@@ -134,7 +134,7 @@ public final class SecretService: Sendable {
     /// Locks the specified objects
     ///
     /// - Parameters:
-    ///   - objects: Array of ObjectPaths of the objects to unlock
+    ///   - objects: Array of ObjectPaths of the objects to lock
     /// - Returns:
     ///   - Array of ObjectPaths of Objects that were locked without a prompt
     ///   - ObjectPath to a prompt to lock the remaining items or nil if no prompt is required
@@ -217,12 +217,12 @@ public final class SecretService: Sendable {
     
     /// Sets the alias for the given collection
     /// - Parameters:
-    ///   - name: The alias you want to get the collection for.
+    ///   - name: The alias you want to set for the collection.
     ///   - collection: The ObjectPath of the collection.
     ///
     /// Some SecretService implementations (for example Ubuntu 26.04's) might only support default
     ///
-    /// org.freedesktop.Secret.Service.ReadAlias
+    /// org.freedesktop.Secret.Service.SetAlias
     public func setAlias(
         _ name: String,
         collection: String

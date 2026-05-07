@@ -122,9 +122,12 @@ struct IntegrationTests: Sendable {
                 alias: ""
             )
             
-            var collection: String? = nil
+            var collection: String? = result.collection
             
-            if let prompt = result.prompt {
+            if
+                collection == nil,
+                let prompt = result.prompt
+            {
                 logger.info("Should show prompt for creation of collection")
                 try await service.prompt(prompt, windowID: nil)
                 
@@ -134,6 +137,7 @@ struct IntegrationTests: Sendable {
                 
                 if result.dismissed {
                     logger.info("Prompt dismissed")
+                    return
                 }
                 collection = result.result.objectPath
             }
