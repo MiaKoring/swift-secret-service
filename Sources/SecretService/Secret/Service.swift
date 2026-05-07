@@ -39,7 +39,7 @@ public final class SecretService: Sendable {
     ///
     /// org.freedesktop.Secret.Service.OpenSession
     public func connect() async throws(SecSError) {
-        let dh = IETF1024DH()
+        let dh = try IETF1024DH()
         
         let dbusPublicKey = dh.publicKey.map { DBusValue.byte($0) }
         
