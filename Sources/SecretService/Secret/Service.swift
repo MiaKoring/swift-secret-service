@@ -79,6 +79,8 @@ public final class SecretService: Sendable {
     /// Use of default collection (returned by ``SecretService/readAlias(_:)``) is recommended for most cases.
     /// Ubuntu 26.04 for example only supports the default alias.
     ///
+    /// Prompt result should be a single ObjectPath.
+    ///
     /// org.freedesktop.Secret.Service.CreateCollection
     public func createCollection(
         properties: [String: DBusValue],
@@ -108,6 +110,8 @@ public final class SecretService: Sendable {
     ///   - Array of ObjectPaths of Objects that were unlocked without a prompt
     ///   - ObjectPath to a prompt to unlock the remaining items or nil if no prompt is required
     ///
+    /// Prompt result should be an array of ObjectPaths.
+    ///
     /// org.freedesktop.Secret.Service.Unlock
     public func unlock(
         objects: [String]
@@ -134,6 +138,8 @@ public final class SecretService: Sendable {
     /// - Returns:
     ///   - Array of ObjectPaths of Objects that were locked without a prompt
     ///   - ObjectPath to a prompt to lock the remaining items or nil if no prompt is required
+    ///
+    /// Prompt result should be an array of ObjectPaths.
     ///
     /// org.freedesktop.Secret.Service.Lock
     public func lock(

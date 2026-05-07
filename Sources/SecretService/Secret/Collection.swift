@@ -9,6 +9,8 @@ extension SecretService {
     /// - Returns:
     ///   - ObjectPath to the Prompt item
     ///
+    /// Prompt result should be a single ObjectPath.
+    ///
     /// org.freedesktop.Secret.Collection.Delete
     public func deleteCollection(
         _ collection: String
@@ -60,6 +62,8 @@ extension SecretService {
     /// - Returns:
     ///   - ObjectPath to item
     ///   - Prompt (only needs to be invoked when item is nil)
+    ///
+    /// Prompt result should be a single ObjectPath to the item.
     ///
     /// org.freedesktop.Secret.Collection.CreateItem
     public func createItem(

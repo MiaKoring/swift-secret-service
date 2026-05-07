@@ -9,6 +9,8 @@ extension SecretService {
     /// - Returns:
     ///   - ObjectPath of prompt when authorization is required
     ///
+    /// Prompt result should be a single ObjectPath.
+    ///
     /// org.freedesktop.Secret.Item.Delete
     public func deleteItem(
         item: String
