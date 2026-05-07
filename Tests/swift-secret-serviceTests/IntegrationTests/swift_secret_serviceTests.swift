@@ -2,6 +2,7 @@ import Testing
 import Foundation
 import DBUS
 import CryptoSwift
+import Logging
 @testable import SecretService
 
 @Suite(.serialized)
@@ -10,6 +11,7 @@ struct IntegrationTests: Sendable {
     /// If items are created, the test function should call teardown as last statement in the withDefaultConnection closure
     static let teardownDeleteAttributeName = "swift-secret-service-delete-on-teardown"
     static let testSecret = "test123"
+    let logger = Logger(label: "IntegrationTests")
     
     @Test(.enabled(if: ProcessInfo.runIntegrationTests))
     func testConnection() async throws {
@@ -114,29 +116,52 @@ struct IntegrationTests: Sendable {
             try await service.connect()
             
             let result = try await service.createCollection(
-                properties: [:],
+                properties: [
+                    "org.freedesktop.Secret.Collection.Label": .string("TestCollection")
+                ],
                 alias: ""
             )
             
+            var collection: String? = nil
+            
             if let prompt = result.prompt {
-                print("should prompt")
+                logger.info("Should show prompt for creation of collection")
                 try await service.prompt(prompt, windowID: nil)
+                
+                guard let result = try await service.awaitPromptCompleted() else {
+                    throw SecSError.noResponse
+                }
+                
+                if result.dismissed {
+                    logger.info("Prompt dismissed")
+                }
+                collection = result.result.objectPath
             }
             
-            guard let collection = result.collection else {
-                Issue.record("Collection was nil prompting might be needed")
+            guard let collection else {
+                logger.warning("Prompt must be completed to continue testing")
                 return
             }
             
-            if let prompt = try await service.deleteCollection(collection) {
-                try await service.prompt(prompt, windowID: nil)
-            }
+            logger.info("Collection created successfully")
             
-            // TODO: handle prompts
+            if let prompt = try await service.deleteCollection(collection) {
+                logger.info("Should show prompt for deletion of collection")
+                try await service.prompt(prompt, windowID: nil)
+                guard let result = try await service.awaitPromptCompleted() else {
+                    throw SecSError.noResponse
+                }
+                if result.dismissed {
+                    logger.info("Prompt dismissed")
+                    logger.warning(
+                        "Completion of the prompt is required to delete the collection"
+                    )
+                }
+            }
         }
     }
     
-    @Test(.enabled(if: ProcessInfo.runIntegrationTests && ProcessInfo.doPrompting && false))
+    @Test(.enabled(if: ProcessInfo.runIntegrationTests && ProcessInfo.doPrompting))
     func testLockUnlock() async throws {
         try await SecretService.withDefaultConnection { connection in
             let service = SecretService(connection: connection)
@@ -147,20 +172,43 @@ struct IntegrationTests: Sendable {
                 return
             }
             
-            guard let item = try await self.createTestItem(using: service, in: collection) else {
-                Issue.record("Failed to create test item")
-                return
+            let lockResult = try await service.lock(objects: [collection])
+            
+            if let prompt = lockResult.prompt {
+                logger.info("Should show prompt for locking of collection")
+                
+                try await service.prompt(prompt, windowID: nil)
+                guard let result = try await service.awaitPromptCompleted() else {
+                    throw SecSError.noResponse
+                }
+                
+                guard !result.dismissed else {
+                    logger.warning(
+                        "Completion of the prompt is required to lock the collection"
+                    )
+                    return
+                }
+                #expect(result.result.array?.asObjectPathArray == [collection])
             }
-            
-            let lockResult = try await service.lock(objects: [item])
-            
-            #expect(lockResult.locked == [item] || lockResult.prompt != nil)
             
             let unlockResult = try await service.unlock(objects: [collection])
             
-            #expect(unlockResult.unlocked == [collection] || unlockResult.prompt != nil)
-            
-            // TODO: handle prompts
+            if let prompt = unlockResult.prompt {
+                logger.info("Should show prompt for unlocking of collection")
+                
+                try await service.prompt(prompt, windowID: nil)
+                guard let result = try await service.awaitPromptCompleted() else {
+                    throw SecSError.noResponse
+                }
+                
+                guard !result.dismissed else {
+                    logger.warning(
+                        "Completion of the prompt is required to unlock the item"
+                    )
+                    return
+                }
+                #expect(result.result.array?.asObjectPathArray == [collection])
+            }
         }
     }
     

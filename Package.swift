@@ -15,7 +15,8 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/wendylabsinc/dbus.git", .upToNextMinor(from: "0.4.0")),
         .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", .upToNextMajor(from: "1.10.0")),
-        .package(url: "https://github.com/attaswift/BigInt.git", .upToNextMajor(from: "5.7.0"))
+        .package(url: "https://github.com/attaswift/BigInt.git", .upToNextMajor(from: "5.7.0")),
+        .package(url: "https://github.com/apple/swift-log", from: "1.6.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -30,7 +31,10 @@ let package = Package(
         ),
         .testTarget(
             name: "swift-secret-serviceTests",
-            dependencies: ["SecretService"]
+            dependencies: [
+                "SecretService",
+                .product(name: "Logging", package: "swift-log")
+            ]
         )
     ]
 )

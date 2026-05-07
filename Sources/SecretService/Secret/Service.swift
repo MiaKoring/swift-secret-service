@@ -20,7 +20,11 @@ enum SecS {
 public final class SecretService: Sendable {
     private let sessionData = Mutex(InternalData())
     
-    private let connection: DBusServerConnection
+    let connection: DBusServerConnection
+    
+    var dbusClientConnection: DBusClient.Connection {
+        connection as! DBusClient.Connection
+    }
     
     public init(connection: DBusServerConnection) {
         self.connection = connection
