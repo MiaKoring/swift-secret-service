@@ -8,14 +8,18 @@ struct IETF1024DH: Sendable {
     private let privateKey: [UInt8]
     let publicKey: [UInt8]
     
-    init() {
+    init() throws(SecSError) {
         self.privateKey = AES.randomIV(20)
         
-        self.publicKey = FastCrypto.powMod(
+        guard let publicKey = FastCrypto.powMod(
             base: [2],
             exp: privateKey,
             modulus: Self.p
-        )
+        ) else {
+            throw .boringSSLModPow
+        }
+        
+        self.publicKey = publicKey
     }
     
     func aesKey(with otherPublicKey: [UInt8]) throws(SecSError) -> [UInt8] {
@@ -23,12 +27,13 @@ struct IETF1024DH: Sendable {
             throw .diffieHellmanFailed(Error.recievedPublicKeyInsecure)
         }
         
-        let sharedSecret = FastCrypto.powMod(
+        guard let sharedSecret = FastCrypto.powMod(
             base: otherPublicKey,
             exp: privateKey,
             modulus: Self.p
-        )
-        
+        ) else {
+            throw .boringSSLModPow
+        }
         
         do {
             return try HKDF(
