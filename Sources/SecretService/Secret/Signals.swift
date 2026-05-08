@@ -1,11 +1,5 @@
 @_exported import DBUS
 
-public enum Signals {
-    public enum Prompt {
-        case completed
-    }
-}
-
 extension SecretService {
     /// Wait for the next prompt to be completed.
     /// - Returns:
