@@ -1,4 +1,4 @@
-import DBUS
+@_exported import DBUS
 
 public enum Signals {
     public enum Prompt {
@@ -38,7 +38,7 @@ extension SecretService {
     ///   - name: The name of the signal.
     ///   - interface: The interface the signal is part of.
     ///   - block: Gets called for every signal coming in with the DBusMessage as parameter.
-    ///     should return the desired value as Optional and whether to exit.
+    ///     Should return the desired value as Optional and whether to exit.
     ///     Only returns when the second part of the tuple is `true`.
     ///     If the signal is not what you wanted, return `false`.
     ///     The block will then be called again for the next signal coming in.

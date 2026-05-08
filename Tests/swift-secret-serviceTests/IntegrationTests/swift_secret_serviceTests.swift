@@ -32,6 +32,15 @@ struct IntegrationTests: Sendable {
                 return
             }
             
+            // Test static property read
+            let property = try await service.readProperty(
+                "Collections",
+                interface: SecS.Iface.service,
+                object: nil
+            ).array?.asObjectPathArray
+            
+            #expect(property?.contains(collection) ?? false)
+            
             try await service.setAlias("default", collection: collection)
         }
     }
@@ -51,6 +60,14 @@ struct IntegrationTests: Sendable {
                 Issue.record("Item is unexpectedly nil")
                 return
             }
+            
+            let label = try await service.readProperty(
+                "Label",
+                interface: SecS.Iface.item,
+                object: item
+            ).string
+            
+            #expect(label == "test")
             
             let secrets = try await service.getSecrets(items: [item], collection: collection)
             

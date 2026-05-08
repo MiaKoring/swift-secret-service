@@ -3,16 +3,16 @@ import Foundation
 import CryptoSwift
 import Synchronization
 
-enum SecS {
-    static let service = "org.freedesktop.secrets"
-    static let transferProtocol = "dh-ietf1024-sha256-aes128-cbc-pkcs7"
+public enum SecS {
+    public static let service = "org.freedesktop.secrets"
+    public static let transferProtocol = "dh-ietf1024-sha256-aes128-cbc-pkcs7"
     
-    enum Iface {
-        static let service    = "org.freedesktop.Secret.Service"
-        static let collection = "org.freedesktop.Secret.Collection"
-        static let item       = "org.freedesktop.Secret.Item"
-        static let session    = "org.freedesktop.Secret.Session"
-        static let prompt     = "org.freedesktop.Secret.Prompt"
+    public enum Iface {
+        public static let service    = "org.freedesktop.Secret.Service"
+        public static let collection = "org.freedesktop.Secret.Collection"
+        public static let item       = "org.freedesktop.Secret.Item"
+        public static let session    = "org.freedesktop.Secret.Session"
+        public static let prompt     = "org.freedesktop.Secret.Prompt"
     }
 }
 
