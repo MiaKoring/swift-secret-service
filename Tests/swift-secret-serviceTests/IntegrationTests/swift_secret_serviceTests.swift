@@ -148,7 +148,9 @@ struct IntegrationTests: Sendable {
                 logger.info("Should show prompt for creation of collection")
                 try await service.prompt(prompt, windowID: nil)
                 
-                guard let result = try await service.awaitPromptCompleted() else {
+                guard
+                    let result = try await service.awaitPromptCompleted(for: prompt)
+                else {
                     throw SecSError.noResponse
                 }
                 
@@ -169,7 +171,9 @@ struct IntegrationTests: Sendable {
             if let prompt = try await service.deleteCollection(collection) {
                 logger.info("Should show prompt for deletion of collection")
                 try await service.prompt(prompt, windowID: nil)
-                guard let result = try await service.awaitPromptCompleted() else {
+                guard
+                    let result = try await service.awaitPromptCompleted(for: prompt)
+                else {
                     throw SecSError.noResponse
                 }
                 if result.dismissed {
@@ -199,7 +203,9 @@ struct IntegrationTests: Sendable {
                 logger.info("Should show prompt for locking of collection")
                 
                 try await service.prompt(prompt, windowID: nil)
-                guard let result = try await service.awaitPromptCompleted() else {
+                guard
+                    let result = try await service.awaitPromptCompleted(for: prompt)
+                else {
                     throw SecSError.noResponse
                 }
                 
@@ -218,7 +224,9 @@ struct IntegrationTests: Sendable {
                 logger.info("Should show prompt for unlocking of collection")
                 
                 try await service.prompt(prompt, windowID: nil)
-                guard let result = try await service.awaitPromptCompleted() else {
+                guard
+                    let result = try await service.awaitPromptCompleted(for: prompt)
+                else {
                     throw SecSError.noResponse
                 }
                 
