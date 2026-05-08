@@ -32,6 +32,15 @@ struct IntegrationTests: Sendable {
                 return
             }
             
+            // Test static property read
+            let property = try await service.readProperty(
+                "Collections",
+                interface: SecS.Iface.service,
+                object: nil
+            ).array?.asObjectPathArray
+            
+            #expect(property?.contains(collection) ?? false)
+            
             try await service.setAlias("default", collection: collection)
         }
     }
@@ -51,6 +60,14 @@ struct IntegrationTests: Sendable {
                 Issue.record("Item is unexpectedly nil")
                 return
             }
+            
+            let label = try await service.readProperty(
+                "Label",
+                interface: SecS.Iface.item,
+                object: item
+            ).string
+            
+            #expect(label == "test")
             
             let secrets = try await service.getSecrets(items: [item], collection: collection)
             
@@ -131,7 +148,9 @@ struct IntegrationTests: Sendable {
                 logger.info("Should show prompt for creation of collection")
                 try await service.prompt(prompt, windowID: nil)
                 
-                guard let result = try await service.awaitPromptCompleted() else {
+                guard
+                    let result = try await service.awaitPromptCompleted(for: prompt)
+                else {
                     throw SecSError.noResponse
                 }
                 
@@ -152,7 +171,9 @@ struct IntegrationTests: Sendable {
             if let prompt = try await service.deleteCollection(collection) {
                 logger.info("Should show prompt for deletion of collection")
                 try await service.prompt(prompt, windowID: nil)
-                guard let result = try await service.awaitPromptCompleted() else {
+                guard
+                    let result = try await service.awaitPromptCompleted(for: prompt)
+                else {
                     throw SecSError.noResponse
                 }
                 if result.dismissed {
@@ -182,7 +203,9 @@ struct IntegrationTests: Sendable {
                 logger.info("Should show prompt for locking of collection")
                 
                 try await service.prompt(prompt, windowID: nil)
-                guard let result = try await service.awaitPromptCompleted() else {
+                guard
+                    let result = try await service.awaitPromptCompleted(for: prompt)
+                else {
                     throw SecSError.noResponse
                 }
                 
@@ -201,7 +224,9 @@ struct IntegrationTests: Sendable {
                 logger.info("Should show prompt for unlocking of collection")
                 
                 try await service.prompt(prompt, windowID: nil)
-                guard let result = try await service.awaitPromptCompleted() else {
+                guard
+                    let result = try await service.awaitPromptCompleted(for: prompt)
+                else {
                     throw SecSError.noResponse
                 }
                 
