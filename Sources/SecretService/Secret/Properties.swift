@@ -6,6 +6,10 @@ extension SecretService {
     ///   - name: The name of the property (e.g. "Collections").
     ///   - interface: The interface the property is declared on (e.g. "org.freedesktop.Secret.Service").
     ///   - object: The ObjectPath of the instance. If nil, defaults to the service root "/org/freedesktop/secrets".
+    ///
+    /// Please refer to the [Secret Service Specification](
+    /// https://specifications.freedesktop.org/secret-service/latest/ref-dbus-api.html
+    /// ) for information about interfaces and their properties.
     public func readProperty(
         _ name: String,
         interface: String,

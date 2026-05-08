@@ -9,8 +9,6 @@ extension SecretService {
         _ prompt: String,
         windowID: String?
     ) async throws(SecSError) {
-        let (session, _) = try getSession()
-        
         let request = DBusRequest.createMethodCall(
             destination: SecS.service,
             path: prompt,
@@ -35,9 +33,7 @@ extension SecretService {
     ///   - prompt: The ObjectPath to the prompt to dismiss
     public func dismissPrompt(
         _ prompt: String
-    ) async throws(SecSError) {
-        let (session, _) = try getSession()
-        
+    ) async throws(SecSError) {        
         let request = DBusRequest.createMethodCall(
             destination: SecS.service,
             path: prompt,
