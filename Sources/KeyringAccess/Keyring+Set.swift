@@ -1,0 +1,72 @@
+import Foundation
+import SecretService
+
+extension Keyring {
+    public func set(
+        _ value: String,
+        for key: String,
+        service: SecretService? = nil
+    ) async throws(SecSError) {
+        guard let service else {
+            do {
+                return try await SecretService.withDefaultConnection { connection in
+                    let service = SecretService(connection: connection)
+                    try await self._set(value, for: key, service: service)
+                }
+            } catch { throw error.asSecSError }
+        }
+        
+        return try await _set(value, for: key, service: service)
+    }
+    
+    @available(*, noasync, message: "Do not use the synchronous API of 'Keyring' in async contexts to avoid deadlocks.")
+    public func set(_ value: String, for key: String) throws(SecSError) {
+        return try bridgeBlocking { () throws(SecSError) in
+            try await self.set(value, for: key, service: nil)
+        }
+    }
+    
+    private func _set(
+        _ value: String,
+        for key: String,
+        service: SecretService
+    ) async throws(SecSError) {
+        if !service.isConnected {
+            try await service.connect()
+        }
+        
+        let defaultCollection = try await self.getRetrieveOrCreateDefaultCollection(service)
+        
+        let secret = Secret(value: value.bytes)
+        
+        let (item, prompt) = try await service.createItem(
+            secret: secret,
+            collection: defaultCollection,
+            properties: [
+                // TODO: Label
+                "org.freedesktop.Secret.Item.Attributes": dbusAttributes(for: key)
+            ]
+        )
+        
+        // Early return if no prompt is needed
+        guard
+            item == nil,
+            let prompt
+        else { return }
+        
+        try await service.prompt(prompt, windowID: nil)
+        let result = try await service.awaitPromptCompleted(for: prompt)
+        
+        guard
+            result?.dismissed == false,
+            let collection = result?.result.objectPath
+        else {
+            if result?.dismissed == false {
+                throw SecSError.promptDismissed
+            } else {
+                throw SecSError.noResponse
+            }
+        }
+        
+    }
+}

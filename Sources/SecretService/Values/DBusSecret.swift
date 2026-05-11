@@ -47,12 +47,12 @@ extension DBusValue {
 /// ``SecretService`` automatically manages encryption in transit.
 public struct Secret: Sendable {
     /// The unencrypted Data of the secret as byte array
-    let value: [UInt8]
+    public let value: [UInt8]
     /// The content type of the stored data
     /// e.g. `text/plain; charset=utf8`
-    let contentType: String
+    public let contentType: String
     
-    init(value: [UInt8], contentType: String = "text/plain; charset=utf8") {
+    public init(value: [UInt8], contentType: String = "text/plain; charset=utf8") {
         self.value = value
         self.contentType = contentType
     }

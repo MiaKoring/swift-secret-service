@@ -3,7 +3,7 @@ import DBUS
 extension Array where Element == DBusValue {
     /// Tries to convert [DBusValue] to [UInt8]
     /// Returns nil if the array contains something not a byte
-    var asByteArray: [UInt8]? {
+    public var asByteArray: [UInt8]? {
         var result = [UInt8]()
         
         for element in self {
@@ -20,7 +20,7 @@ extension Array where Element == DBusValue {
     
     /// Tries to convert [DBusValue] to [String] as objectPaths
     /// Returns nil if the array contains something not a byte
-    var asObjectPathArray: [String]? {
+    public var asObjectPathArray: [String]? {
         var result = [String]()
         
         for element in self {

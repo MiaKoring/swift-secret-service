@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "swift-secret-service",
+    name: "KeyringAccess",
     platforms: [.macOS(.v15)],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
@@ -29,11 +29,24 @@ let package = Package(
                 .product(name: "NIOSSL", package: "swift-nio-ssl"),
             ]
         ),
-        .testTarget(
-            name: "swift-secret-serviceTests",
+        .target(
+            name: "KeyringAccess",
             dependencies: [
                 "SecretService",
                 .product(name: "Logging", package: "swift-log")
+            ]
+        ),
+        .testTarget(
+            name: "SecretServiceTests",
+            dependencies: [
+                "SecretService",
+                .product(name: "Logging", package: "swift-log")
+            ]
+        ),
+        .testTarget(
+            name: "KeyringAccessTests",
+            dependencies: [
+                "KeyringAccess"
             ]
         )
     ]
