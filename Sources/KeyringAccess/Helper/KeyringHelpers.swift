@@ -4,18 +4,20 @@ import SecretService
 extension Keyring {
     func getRetrieveOrCreateDefaultCollection(_ service: SecretService? = nil) async throws(SecSError) -> String {
         // If we already know the defaultCollection, just return it
-        if let defaultCollection = Self.defaultCollection.withLock({ $0 }) {
+        if let defaultCollection = await Self.defaultCollection.withLock({ $0 }) {
             return defaultCollection
         }
         
         do {
-            guard let service else {
-                return try await SecretService.withDefaultConnection { connection in
-                    let service = SecretService(connection: connection)
-                    return try await self.retrieveOrCreateDefaultCollection(with: service)
+            return try await Self.defaultCollection.withLock { _ in
+                guard let service else {
+                    return try await SecretService.withDefaultConnection { connection in
+                        let service = SecretService(connection: connection)
+                        return try await self.retrieveOrCreateDefaultCollection(with: service)
+                    }
                 }
-            }
-            return try await self.retrieveOrCreateDefaultCollection(with: service)
+                return try await self.retrieveOrCreateDefaultCollection(with: service)
+            }! // safe to force unwrap, because the internal functions only return String
         } catch { throw error.asSecSError }
     }
     
@@ -38,7 +40,7 @@ extension Keyring {
         // If there already is a login collection, set it as default & return
         if let login = collections.first(where: { $0 .hasSuffix("/login")}) {
             try await service.setAlias("default", collection: login)
-            return self.setDefaultCollection(to: login)
+            return login
         } else {
             // Create login collection as default
             let (collection, prompt) = try await service.createCollection(
@@ -50,7 +52,7 @@ extension Keyring {
             
             // Return immediately if no prompt is required
             if let collection {
-                return self.setDefaultCollection(to: collection)
+                return collection
             } else if let prompt {
                 // Show prompt if needed
                 try await service.prompt(prompt, windowID: nil)
@@ -61,24 +63,17 @@ extension Keyring {
                     let collection = result?.result.objectPath
                 else {
                     if result?.dismissed == false {
-                        throw SecSError.promptDismissed
-                    } else {
                         throw SecSError.noResponse
+                    } else {
+                        throw SecSError.promptDismissed
                     }
                 }
                 // Set and return prompt result
-                return self.setDefaultCollection(to: collection)
+                return collection
             } else {
                 throw SecSError.unexpectedResponse(for: "CreateCollection")
             }
         }
-    }
-    
-    func setDefaultCollection(to defaultCollection: String) -> String {
-        Keyring.defaultCollection.withLock { collection in
-            collection = defaultCollection
-        }
-        return defaultCollection
     }
     
     @available(*, noasync, message: "Do not use the synchronous API of 'Keyring' in async contexts to avoid deadlocks.")

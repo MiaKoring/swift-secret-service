@@ -14,7 +14,7 @@ public final class Keyring: Sendable {
     static let internalQueue = DispatchQueue(label: "de.amethystsoft.KeyringAccess")
     
     public static let appIdentifier = Mutex<String?>(nil)
-    static let defaultCollection = Mutex<String?>(nil)
+    static let defaultCollection = AsyncMutex<String?>(value: nil)
     
     let groupID: String
     let type: KeyringType

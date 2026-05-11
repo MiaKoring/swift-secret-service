@@ -11,6 +11,10 @@ let package = Package(
         .library(
             name: "SecretService",
             targets: ["SecretService"]),
+        .library(
+            name: "KeyringAccess",
+            targets: ["KeyringAccess"]
+        )
     ],
     dependencies: [
         .package(url: "https://github.com/wendylabsinc/dbus.git", .upToNextMinor(from: "0.4.0")),

@@ -121,9 +121,9 @@ extension Keyring {
             let collection = result?.result.objectPath
         else {
             if result?.dismissed == false {
-                throw SecSError.promptDismissed
-            } else {
                 throw SecSError.noResponse
+            } else {
+                throw SecSError.promptDismissed
             }
         }
     }
@@ -153,9 +153,9 @@ extension Keyring {
             let deletedItem = result?.result.objectPath
         else {
             if result?.dismissed == false {
-                throw SecSError.promptDismissed
-            } else {
                 throw SecSError.noResponse
+            } else {
+                throw SecSError.promptDismissed
             }
         }
         
