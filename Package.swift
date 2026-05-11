@@ -4,13 +4,17 @@
 import PackageDescription
 
 let package = Package(
-    name: "swift-secret-service",
+    name: "KeyringAccess",
     platforms: [.macOS(.v15)],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "SecretService",
             targets: ["SecretService"]),
+        .library(
+            name: "KeyringAccess",
+            targets: ["KeyringAccess"]
+        )
     ],
     dependencies: [
         .package(url: "https://github.com/wendylabsinc/dbus.git", .upToNextMinor(from: "0.4.0")),
@@ -29,11 +33,24 @@ let package = Package(
                 .product(name: "NIOSSL", package: "swift-nio-ssl"),
             ]
         ),
-        .testTarget(
-            name: "swift-secret-serviceTests",
+        .target(
+            name: "KeyringAccess",
             dependencies: [
                 "SecretService",
                 .product(name: "Logging", package: "swift-log")
+            ]
+        ),
+        .testTarget(
+            name: "SecretServiceTests",
+            dependencies: [
+                "SecretService",
+                .product(name: "Logging", package: "swift-log")
+            ]
+        ),
+        .testTarget(
+            name: "KeyringAccessTests",
+            dependencies: [
+                "KeyringAccess"
             ]
         )
     ]

@@ -26,6 +26,10 @@ public final class SecretService: Sendable {
         connection as! DBusClient.Connection
     }
     
+    public var isConnected: Bool {
+        sessionData.withLock { $0.sessionPath } != nil
+    }
+    
     public init(connection: DBusServerConnection) {
         self.connection = connection
     }

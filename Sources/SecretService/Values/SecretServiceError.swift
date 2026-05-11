@@ -19,9 +19,12 @@ public enum SecretServiceError: Error {
     case secretEncryptionFailed(Error)
     case secretDecryptionFailed(Error)
     
+    // MARK: - Prompt
+    case promptDismissed
+    
     // MARK: - BoringSSL allocation error
     case boringSSLModPow
     
     // MARK: - unexpected
-    case unexpectedError
+    case unexpectedError(Error? = nil)
 }
