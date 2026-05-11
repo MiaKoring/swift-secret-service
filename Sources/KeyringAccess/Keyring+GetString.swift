@@ -2,6 +2,45 @@ import Foundation
 import SecretService
 
 extension Keyring {
+    @available(*, noasync, message: "Do not use the synchronous API of 'Keyring' in async contexts to avoid deadlocks.")
+    public subscript(_ key: String) -> String? {
+        get {
+            do {
+                return try get(for: key)
+            } catch {
+                Self.logger.error(
+                    "Encountered error while getting data via subscript",
+                    error: error
+                )
+                return nil
+            }
+        }
+        set {
+            do {
+                try set(newValue, for: key)
+            } catch {
+                Self.logger.error(
+                    "Encountered error while getting data via subscript",
+                    error: error
+                )
+            }
+        }
+    }
+    
+    public subscript(asyncString key: String) -> String? {
+        get async throws(SecSError) {
+            do {
+                return try await get(for: key)
+            } catch {
+                Self.logger.error(
+                    "Encountered error while getting data via subscript",
+                    error: error
+                )
+                return nil
+            }
+        }
+    }
+    
     public func get(for key: String, service: SecretService? = nil) async throws(SecSError) -> String? {
         try await getString(key, service: service)
     }

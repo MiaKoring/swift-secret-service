@@ -11,12 +11,12 @@ extension Keyring {
             do {
                 return try await SecretService.withDefaultConnection { connection in
                     let service = SecretService(connection: connection)
-                    try await self._set(value, for: key, service: service)
+                    try await self._set(value?.bytes, for: key, service: service)
                 }
             } catch { throw error.asSecSError }
         }
         
-        return try await _set(value, for: key, service: service)
+        return try await _set(value?.bytes, for: key, service: service)
     }
     
     @available(*, noasync, message: "Do not use the synchronous API of 'Keyring' in async contexts to avoid deadlocks.")
@@ -26,8 +26,32 @@ extension Keyring {
         }
     }
     
+    public func setData(
+        _ value: Data?,
+        for key: String,
+        service: SecretService? = nil
+    ) async throws(SecSError) {
+        guard let service else {
+            do {
+                return try await SecretService.withDefaultConnection { connection in
+                    let service = SecretService(connection: connection)
+                    try await self._set(value?.byteArray, for: key, service: service)
+                }
+            } catch { throw error.asSecSError }
+        }
+        
+        return try await _set(value?.byteArray, for: key, service: service)
+    }
+    
+    @available(*, noasync, message: "Do not use the synchronous API of 'Keyring' in async contexts to avoid deadlocks.")
+    public func setData(_ value: Data?, for key: String) throws(SecSError) {
+        return try bridgeBlocking { () throws(SecSError) in
+            try await self.setData(value, for: key, service: nil)
+        }
+    }
+    
     private func _set(
-        _ value: String?,
+        _ value: [UInt8]?,
         for key: String,
         service: SecretService
     ) async throws(SecSError) {
@@ -42,7 +66,7 @@ extension Keyring {
         
         let defaultCollection = try await self.getRetrieveOrCreateDefaultCollection(service)
         
-        let secret = Secret(value: value.bytes)
+        let secret = Secret(value: value)
         
         let (item, prompt) = try await service.createItem(
             secret: secret,

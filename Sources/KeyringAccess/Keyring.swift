@@ -34,4 +34,13 @@ public final class Keyring: Sendable {
         self.groupID = server
         self.type = .server
     }
+    
+    public static func runBatched(
+        _ block: @Sendable @escaping (SecretService) async throws -> Void
+    ) async throws {
+        try await SecretService.withDefaultConnection { connection in
+            let service = SecretService(connection: connection)
+            try await block(service)
+        }
+    }
 }

@@ -107,7 +107,7 @@ extension Keyring {
         switch result.value {
             case .success(let result): return result
             case .failure(let error): throw error
-                // Should be impossible
+            // Should be impossible
             case .none:
                 fatalError("Unexpectedly reached nil in Keyring.bridgeBlocking")
         }
