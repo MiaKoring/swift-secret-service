@@ -35,6 +35,14 @@ public final class Keyring: Sendable {
         self.type = .server
     }
     
+    /// Run multiple operations using the same connection, saving the connection establishment cost.
+    ///
+    /// This only works with functions you pass the connection (SecretService), not subscripts.
+    ///
+    /// Only asynchronous methods are available in this block.
+    ///
+    /// - Parameters:
+    ///   - block: The code to execute with the shared connection.
     public static func runBatched(
         _ block: @Sendable @escaping (SecretService) async throws -> Void
     ) async throws {

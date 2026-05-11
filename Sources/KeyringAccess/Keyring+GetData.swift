@@ -2,6 +2,13 @@ import Foundation
 import SecretService
 
 extension Keyring {
+    /// Get or set data for the given key.
+    ///
+    /// - Parameters:
+    ///   - key: The key for the secret. For example an account name.
+    ///
+    ///   Example usage:
+    ///   keychain[data: "test"] = newValue
     @available(*, noasync, message: "Do not use the synchronous API of 'Keyring' in async contexts to avoid deadlocks.")
     public subscript(data key: String) -> Data? {
         get {
@@ -27,20 +34,25 @@ extension Keyring {
         }
     }
     
+    /// Get data for the given key asynchronously and handle potential errors.
+    ///
+    /// - Parameters:
+    ///   - key: The key for the secret. For example an account name.
+    ///
+    ///   Example usage:
+    ///   let secret = try await keychain[asyncData: "test"]
     public subscript(asyncData key: String) -> Data? {
         get async throws(SecSError) {
-            do {
-                return try await getData(key)
-            } catch {
-                Self.logger.error(
-                    "Encountered error while getting data via subscript",
-                    error: error
-                )
-                return nil
-            }
+            return try await getData(key)
         }
     }
     
+    /// Get data for the given key and handle potential errors.
+    ///
+    /// Unavaliable in asynchronous contexts. Use async counterpart.
+    ///
+    /// - Parameters:
+    ///   - key: The key for the secret. For example an account name.
    @available(*, noasync, message: "Do not use the synchronous API of 'Keyring' in async contexts to avoid deadlocks.")
     public func getData(for key: String) throws(SecSError) -> Data? {
         return try bridgeBlocking { () throws(SecSError) -> Data? in
@@ -48,6 +60,13 @@ extension Keyring {
         }
     }
     
+    /// Get data for the given key and handle potential errors.
+    ///
+    /// Can re-use a shared connection.
+    ///
+    /// - Parameters:
+    ///   - key: The key for the secret. For example an account name.
+    ///   - service: The shared, already established connection (or nil).
     public func getData(
         _ key: String,
         service: SecretService? = nil

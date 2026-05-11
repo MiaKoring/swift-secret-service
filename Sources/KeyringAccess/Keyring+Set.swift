@@ -2,6 +2,14 @@ import Foundation
 import SecretService
 
 extension Keyring {
+    /// Set a the string for the given key and handle potential errors.
+    ///
+    /// Can re-use a shared connection.
+    ///
+    /// - Parameters:
+    ///   - value: The new value.
+    ///   - key: The key for the secret. For example an account name.
+    ///   - service: The shared, already established connection (or nil).
     public func set(
         _ value: String?,
         for key: String,
@@ -19,6 +27,13 @@ extension Keyring {
         return try await _set(value?.bytes, for: key, service: service)
     }
     
+    /// Set a the string for the given key and handle potential errors.
+    ///
+    /// Unavailable in asynchronous contexts. Use async counterpart.
+    ///
+    /// - Parameters:
+    ///   - value: The new value.
+    ///   - key: The key for the secret. For example an account name.
     @available(*, noasync, message: "Do not use the synchronous API of 'Keyring' in async contexts to avoid deadlocks.")
     public func set(_ value: String?, for key: String) throws(SecSError) {
         return try bridgeBlocking { () throws(SecSError) in
@@ -26,6 +41,14 @@ extension Keyring {
         }
     }
     
+    /// Set data for the given key and handle potential errors.
+    ///
+    /// Can re-use a shared connection.
+    ///
+    /// - Parameters:
+    ///   - value: The new value.
+    ///   - key: The key for the secret. For example an account name.
+    ///   - service: The shared, already established connection (or nil).
     public func setData(
         _ value: Data?,
         for key: String,
@@ -43,6 +66,13 @@ extension Keyring {
         return try await _set(value?.byteArray, for: key, service: service)
     }
     
+    /// Set data for the given key and handle potential errors.
+    ///
+    /// Unavailable in asynchronous contexts. Use async counterpart.
+    ///
+    /// - Parameters:
+    ///   - value: The new value.
+    ///   - key: The key for the secret. For example an account name.
     @available(*, noasync, message: "Do not use the synchronous API of 'Keyring' in async contexts to avoid deadlocks.")
     public func setData(_ value: Data?, for key: String) throws(SecSError) {
         return try bridgeBlocking { () throws(SecSError) in
