@@ -5,7 +5,7 @@ import Testing
 @Suite(.serialized)
 struct KeyringTest {
     @Test(.enabled(if: ProcessInfo.runIntegrationTests))
-    func readWrite() async throws {
+    func testCRUD() async throws {
         Keyring.appIdentifier.withLock { identifier in
             identifier = "de.amethystsoft.KeyringAccess.Testing"
         }
@@ -15,8 +15,20 @@ struct KeyringTest {
         
         try await keyring.set(secret, for: key)
         let result = try await keyring.get(for: key)
-        print("test")
+        
         #expect(result == secret)
+        
+        let newSecret = "321tseT"
+        
+        try await keyring.set(newSecret, for: key)
+        let newResult = try await keyring.get(for: key)
+        
+        #expect(newResult == newSecret)
+        
+        try await keyring.set(nil, for: key)
+        let deletedResult = try await keyring.get(for: key)
+        
+        #expect(deletedResult == nil)
     }
 }
 

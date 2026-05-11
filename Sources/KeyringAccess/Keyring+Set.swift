@@ -3,7 +3,7 @@ import SecretService
 
 extension Keyring {
     public func set(
-        _ value: String,
+        _ value: String?,
         for key: String,
         service: SecretService? = nil
     ) async throws(SecSError) {
@@ -20,17 +20,22 @@ extension Keyring {
     }
     
     @available(*, noasync, message: "Do not use the synchronous API of 'Keyring' in async contexts to avoid deadlocks.")
-    public func set(_ value: String, for key: String) throws(SecSError) {
+    public func set(_ value: String?, for key: String) throws(SecSError) {
         return try bridgeBlocking { () throws(SecSError) in
             try await self.set(value, for: key, service: nil)
         }
     }
     
     private func _set(
-        _ value: String,
+        _ value: String?,
         for key: String,
         service: SecretService
     ) async throws(SecSError) {
+        guard let value else {
+            try await _deleteItem(with: key, service: service)
+            return
+        }
+        
         if !service.isConnected {
             try await service.connect()
         }
@@ -67,6 +72,43 @@ extension Keyring {
                 throw SecSError.noResponse
             }
         }
+    }
+    
+    private func _deleteItem(
+        with key: String,
+        service: SecretService
+    ) async throws(SecSError) {
+        if !service.isConnected {
+            try await service.connect()
+        }
         
+        let defaultCollection = try await self.getRetrieveOrCreateDefaultCollection(service)
+        
+        guard let item = try await service.searchItems(
+            for: attributes(for: key),
+            in: defaultCollection
+        ).first else { return }
+        
+        guard let prompt = try await service.deleteItem(item: item) else { return }
+        
+        try await service.prompt(prompt, windowID: nil)
+        let result = try await service.awaitPromptCompleted(for: prompt)
+        
+        guard
+            result?.dismissed == false,
+            let deletedItem = result?.result.objectPath
+        else {
+            if result?.dismissed == false {
+                throw SecSError.promptDismissed
+            } else {
+                throw SecSError.noResponse
+            }
+        }
+        
+        if deletedItem != item {
+            throw SecSError.unexpectedResponse(
+                for: "Delete item prompt returned different ObjectPath than expected"
+            )
+        }
     }
 }
