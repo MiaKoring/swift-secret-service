@@ -24,14 +24,14 @@ jobs:
           swift package --allow-writing-to-package-directory \
             generate-documentation --target KeyringAccess \
             --transform-for-static-hosting \
-            --hosting-base-path YOUR_REPO_NAME/keyring \
+            --hosting-base-path KeyringAccess/keyring \
             --output-path ./docs/keyring
 
           # 2. Generate SecretService
           swift package --allow-writing-to-package-directory \
             generate-documentation --target SecretService \
             --transform-for-static-hosting \
-            --hosting-base-path YOUR_REPO_NAME/secret \
+            --hosting-base-path KeyringAccess/secret \
             --output-path ./docs/secret
 
           # 3. Create a landing page to choose between them
