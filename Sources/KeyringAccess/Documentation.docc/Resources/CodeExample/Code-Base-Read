@@ -20,7 +20,7 @@ keyring.set("mytoken123", for: "user")
 keyring["user"] = "newtoken123"
 
 // Read secret via subscript (also available asynchronously)
-let secret = keyring["user"]
+let secretViaSubscript = keyring["user"]
 
 // Read secret via getter (also available asynchronously)
-let secret = keyring.get(for: "user")
+let secretViaGetter = keyring.get(for: "user")

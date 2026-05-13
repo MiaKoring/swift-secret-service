@@ -13,7 +13,7 @@ It offers a resilient storage approach: if no default keyring is found, the libr
 - **Interactive Authentication**: Automatically handles system prompt redirects if the keyring is locked.
 - **Modern Swift**: Fully supports `async/await` for all operations.
 - **Secure**: Uses the system's native secret storage (like GNOME Keyring or KWallet).
-- **Subscript and get/set Support**: Use subscripts or methods, depending on what fits your usecase better.
+- **Subscript and get/set Support**: Use subscripts or methods, depending on what fits your use case better.
 
 ## Collection Management
 

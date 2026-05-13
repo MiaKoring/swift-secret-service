@@ -20,21 +20,21 @@ keyring.set("mytoken123", for: "user")
 keyring["user"] = "newtoken123"
 
 // Read secret via subscript (also available asynchronously)
-let secret = keyring["user"]
+let secretViaSubscript = keyring["user"]
 
 // Read secret via getter (also available asynchronously)
-let secret = keyring.get(for: "user")
+let secretViaGetter = keyring.get(for: "user")
 
 // Get attributes via subscript (also available asynchronously)
-if let attributes = keyring[attributes: "user"] {
-    print("Label: \(attributes.label)")
-    print("Created at: \(attributes.created)")
-    print("Modified at: \(attributes.modified)")
+if let attributesViaSubscript = keyring[attributes: "user"] {
+    print("Label: \(attributesViaSubscript.label)")
+    print("Created at: \(attributesViaSubscript.created)")
+    print("Modified at: \(attributesViaSubscript.modified)")
 }
 
 // Get attributes via getter (also available asynchronously)
-if let attributes = keyring.getAttributes("user") {
-    print("Label: \(attributes.label)")
-    print("Created at: \(attributes.created)")
-    print("Modified at: \(attributes.modified)")
+if let attributesViaGetter = keyring.getAttributes("user") {
+    print("Label: \(attributesViaGetter.label)")
+    print("Created at: \(attributesViaGetter.created)")
+    print("Modified at: \(attributesViaGetter.modified)")
 }
