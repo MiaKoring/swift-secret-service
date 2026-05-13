@@ -20,21 +20,26 @@ jobs:
       
       - name: Generate DocC
         run: |
-          # 1. Generate the archive. Force the include of the docc bundle.
+          # Create the directory structure first
+          mkdir -p ./docs/keyring
+          mkdir -p ./docs/secret
+      
+          # Generate KeyringAccess
           swift package --allow-writing-to-package-directory \
             generate-documentation --target KeyringAccess \
-            --fallback-bundle-identifier com.mia.KeyringAccess \
             --transform-for-static-hosting \
-            --hosting-base-path KeyringAccess \
-            --output-path ./docs
+            --hosting-base-path KeyringAccess/keyring \
+            --output-path ./docs/keyring
 
-          # 2. Flexible redirect to the documentation index
-          # This allows the DocC router to handle /tutorials or /documentation
-          echo '<script>
-            if (window.location.pathname.split("/").length <= 2) {
-              window.location.replace(window.location.pathname + "documentation/keyringaccess");
-            }
-          </script>' > ./docs/index.html
+          # Generate SecretService
+          swift package --allow-writing-to-package-directory \
+            generate-documentation --target SecretService \
+            --transform-for-static-hosting \
+            --hosting-base-path KeyringAccess/secret \
+            --output-path ./docs/secret
+
+          # Simple landing redirect (or use a list as shown previously)
+          echo '<script>window.location.href += "/keyring/documentation/keyringaccess"</script>' > ./docs/index.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
