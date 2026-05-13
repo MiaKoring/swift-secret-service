@@ -27,21 +27,18 @@ jobs:
           KA_PATH=$(find .build -name "KeyringAccess.doccarchive" -type d | head -n 1)
       
           # 3. Process KeyringAccess
-          xcrun docc process-archive transform-for-static-hosting \
-            "$KA_PATH" \
-            --output-path ./docs \
-            --hosting-base-path KeyringAccess
+          xcrun docc process-archive transform-for-static-hosting "$KA_PATH" --output-path ./docs --hosting-base-path KeyringAccess
       
           # 4. Create redirect
           echo '<script>window.location.href += "/documentation/keyringaccess"</script>' > ./docs/index.html
                   
-            - name: Setup Pages
-              uses: actions/configure-pages@v4
-            
-            - name: Upload artifact
-              uses: actions/upload-pages-artifact@v3
-              with:
-                path: ./docs
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docs
   
   deploy:
     environment:
