@@ -31,7 +31,7 @@ jobs:
             --output-path ./docs \
             --disable-indexing \
             --transform-for-static-hosting \
-            --hosting-base-path your-repo-name
+            --hosting-base-path KeyringAccess
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
