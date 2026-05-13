@@ -20,45 +20,28 @@ jobs:
       
       - name: Generate DocC
         run: |
-          # 1. Build archives (ignore move errors, the archives are still created in .build)
+          # 1. Build archive for KeyringAccess
           swift package generate-documentation --target KeyringAccess || true
-          swift package generate-documentation --target SecretService || true
-          
-          # 2. Locate the generated archives
+      
+          # 2. Locate the generated archive
           KA_PATH=$(find .build -name "KeyringAccess.doccarchive" -type d | head -n 1)
-          SS_PATH=$(find .build -name "SecretService.doccarchive" -type d | head -n 1)
-          
-          # 3. Process KeyringAccess first into the main 'docs' folder
+      
+          # 3. Process KeyringAccess
           xcrun docc process-archive transform-for-static-hosting \
             "$KA_PATH" \
             --output-path ./docs \
             --hosting-base-path KeyringAccess
-
-          # 4. Process SecretService into a temporary folder
-          xcrun docc process-archive transform-for-static-hosting \
-            "$SS_PATH" \
-            --output-path ./docs-ss \
-            --hosting-base-path KeyringAccess
-
-          # 5. Merge SecretService data into the main 'docs' folder
-          # This copies the specific target folders without overwriting the KeyringAccess ones
-          cp -R ./docs-ss/documentation/secretservice ./docs/documentation/
-          cp -R ./docs-ss/data/documentation/secretservice ./docs/data/documentation/
-          
-          # Also merge tutorials if they exist (tutorial names are usually lowercase)
-          cp -R ./docs-ss/tutorials/secretservice ./docs/tutorials/ 2>/dev/null || true
-          cp -R ./docs-ss/data/tutorials/secretservice ./docs/data/tutorials/ 2>/dev/null || true
-
-          # 6. Create the root redirect (defaults to KeyringAccess)
-          echo '<script>window.location.href += "/documentation/keyringaccess"</script>' > ./docs/index.html
-            
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
       
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./docs
+          # 4. Create redirect
+          echo '<script>window.location.href += "/documentation/keyringaccess"</script>' > ./docs/index.html
+                  
+            - name: Setup Pages
+              uses: actions/configure-pages@v4
+            
+            - name: Upload artifact
+              uses: actions/upload-pages-artifact@v3
+              with:
+                path: ./docs
   
   deploy:
     environment:
