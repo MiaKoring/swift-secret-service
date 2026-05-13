@@ -1,10 +1,23 @@
-# ``KeyringAccess``
+# KeyringAccess & SecretService
+
+![Swift](https://img.shields.io/badge/swift-F54A2A?style=for-the-badge&logo=swift&logoColor=white)
+![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
+
+[Documentation KeyringAccess](https://amethystsoft.github.io/KeyringAccess/keyring/documentation/keyringaccess/)
+[Documentation SecretService](https://amethystsoft.github.io/KeyringAccess/secret/documentation/secretservice/)
+
+> Use KeyringAccess for a simplified API. Use SecretService if you need low-level DBus communication or custom collection handling.
+
+SecretService is a zero-system-dependency, full-swift implementation of the freedesktop secret service dbus spec.
+KeyringAccess provides a convenient high level API for linux desktop apps.
+
+## `KeyringAccess`
 
 A pure Swift library to store secrets securely on Linux with 0 system development dependencies.
 
 ## Overview
 
-``KeyringAccess`` provides a native Swift implementation of the Freedesktop Secret Service API. It eliminates the need for system development headers like libsecret-1-dev by communicating directly via DBus.
+`KeyringAccess` provides a native Swift implementation of the Freedesktop Secret Service API. It eliminates the need for system development headers like libsecret-1-dev by communicating directly via DBus.
 
 It offers a resilient storage approach: if no default keyring is found, the library automatically resolves this by promoting existing collections or creating a new one, ensuring a seamless experience for both CLI and Desktop applications.
 
@@ -22,6 +35,13 @@ It offers a resilient storage approach: if no default keyring is found, the libr
 - **Automatic Discovery**: It automatically targets the `default` collection.
 - **Intelligent Fallback**: If no `default` alias exists, the library looks for an existing `login` collection and promotes it to `default`.
 - **Zero-Config**: If no suitable collection is found, it will automatically create a new one to ensure your secrets can be stored immediately.
+
+## Installation
+```swift
+dependencies: [
+    .package(url: "https://github.com/amethystsoft/KeyringAccess.git", from: "1.0.0")
+]
+```
 
 ## Usage
 ```swift
@@ -81,6 +101,3 @@ try await Keyring.runBatched { service in
     // ...
 }
 ```
-
-## Topics
-- ``Keyring``
