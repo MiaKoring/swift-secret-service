@@ -1,26 +1,56 @@
+name: Build and Deploy DocC
+
 on:
+  push:
+      branches:
+          **
   workflow_dispatch:
-      
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
 jobs:
-  build-and-deploy:
-    runs-on: macos-latest # or ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
+  build:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       
-      - name: Compile
-        uses: ./.github/actions/compile-docs
+      - name: Set up Swift
+        uses: swift-actions/setup-swift@v1
         with:
-          target: KeyringAccess
-          use-swiftpm: 'true'
-
+          swift-version: '6.0'
+      
+      - name: Generate DocC
+        run: |
+          swift package --allow-writing-to-directory ./docs \
+            generate-documentation \
+            --target YourTargetName \
+            --output-path ./docs \
+            --disable-indexing \
+            --transform-for-static-hosting \
+            --hosting-base-path your-repo-name
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Point to the generated doccarchive
-          path: 'KeyringAccess.doccarchive'
-
-      - name: Deploy to GitHub Pages
+          path: ./docs
+  
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to Pages
+        id: deployment
         uses: actions/deploy-pages@v4
