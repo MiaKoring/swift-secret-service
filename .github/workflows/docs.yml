@@ -20,28 +20,26 @@ jobs:
       
       - name: Generate DocC
         run: |
-          # 1. Generate KeyringAccess
+          # Create the directory structure first
+          mkdir -p ./docs/keyring
+          mkdir -p ./docs/secret
+      
+          # Generate KeyringAccess
           swift package --allow-writing-to-package-directory \
             generate-documentation --target KeyringAccess \
             --transform-for-static-hosting \
             --hosting-base-path KeyringAccess/keyring \
             --output-path ./docs/keyring
 
-          # 2. Generate SecretService
+          # Generate SecretService
           swift package --allow-writing-to-package-directory \
             generate-documentation --target SecretService \
             --transform-for-static-hosting \
             --hosting-base-path KeyringAccess/secret \
             --output-path ./docs/secret
 
-          # 3. Create a landing page to choose between them
-          echo '<html><body>
-            <h1>Documentation</h1>
-            <ul>
-              <li><a href="keyring/documentation/keyringaccess">KeyringAccess</a></li>
-              <li><a href="secret/documentation/secretservice">SecretService</a></li>
-            </ul>
-          </body></html>' > ./docs/index.html
+          # Simple landing redirect (or use a list as shown previously)
+          echo '<script>window.location.href += "/keyring/documentation/keyringaccess"</script>' > ./docs/index.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
