@@ -14,15 +14,9 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Install Swift 6
-        run: |
-          wget https://download.swift.org/swift-6.2-release/ubuntu2404/swift-6.2-RELEASE/swift-6.2-RELEASE-ubuntu24.04.tar.gz
-          tar xzf swift-6.2-RELEASE-ubuntu24.04.tar.gz
-          echo "$PWD/swift-6.2-RELEASE-ubuntu24.04/usr/bin" >> $GITHUB_PATH
       
       - name: Generate DocC
         run: |
@@ -30,13 +24,20 @@ jobs:
           swift package generate-documentation \
             --output-path ./docs-archives
           
-          # Use plugin to convert
-          swift package plugin \
-            --package-path . \
-            convert-documentation \
+          # Process archive on macOS with xcrun
+          $(xcrun --find docc) process-archive \
+            transform-for-static-hosting \
+            ./docs-archives/KeyringAccess.doccarchive \
             --output-path ./docs \
-            --hosting-base-path KeyringAccess \
-            ./docs-archives/KeyringAccess.doccarchive
+            --hosting-base-path KeyringAccess
+            
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docs
   
   deploy:
     environment:
