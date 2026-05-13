@@ -20,21 +20,28 @@ jobs:
       
       - name: Generate DocC
         run: |
-          # 1. Generate the archive. Force the include of the docc bundle.
+          # 1. Generate KeyringAccess
           swift package --allow-writing-to-package-directory \
             generate-documentation --target KeyringAccess \
-            --fallback-bundle-identifier com.mia.KeyringAccess \
             --transform-for-static-hosting \
-            --hosting-base-path KeyringAccess \
-            --output-path ./docs
+            --hosting-base-path YOUR_REPO_NAME/keyring \
+            --output-path ./docs/keyring
 
-          # 2. Flexible redirect to the documentation index
-          # This allows the DocC router to handle /tutorials or /documentation
-          echo '<script>
-            if (window.location.pathname.split("/").length <= 2) {
-              window.location.replace(window.location.pathname + "documentation/keyringaccess");
-            }
-          </script>' > ./docs/index.html
+          # 2. Generate SecretService
+          swift package --allow-writing-to-package-directory \
+            generate-documentation --target SecretService \
+            --transform-for-static-hosting \
+            --hosting-base-path YOUR_REPO_NAME/secret \
+            --output-path ./docs/secret
+
+          # 3. Create a landing page to choose between them
+          echo '<html><body>
+            <h1>Documentation</h1>
+            <ul>
+              <li><a href="keyring/documentation/keyringaccess">KeyringAccess</a></li>
+              <li><a href="secret/documentation/secretservice">SecretService</a></li>
+            </ul>
+          </body></html>' > ./docs/index.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
