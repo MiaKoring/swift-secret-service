@@ -9,7 +9,7 @@ enum KeyringType {
 }
 
 /// A managed Keyring.
-public final class Keyring: Sendable {
+public struct Keyring: @unchecked Sendable {
     static let logger = Logger(label: "de.amethystsoft.KeyringAccess")
     static let internalQueue = DispatchQueue(label: "de.amethystsoft.KeyringAccess")
     
@@ -18,6 +18,8 @@ public final class Keyring: Sendable {
     
     let groupID: String
     let type: KeyringType
+    
+    var label: String?
     
     /// - Parameters:
     ///   - service: The service the Keyring should store secrets for.
@@ -50,5 +52,11 @@ public final class Keyring: Sendable {
             let service = SecretService(connection: connection)
             try await block(service)
         }
+    }
+    
+    public func label(_ label: String) -> Self {
+        var new = self
+        new.label = label
+        return new
     }
 }

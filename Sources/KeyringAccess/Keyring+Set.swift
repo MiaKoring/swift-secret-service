@@ -102,7 +102,7 @@ extension Keyring {
             secret: secret,
             collection: defaultCollection,
             properties: [
-                // TODO: Label
+                "org.freedesktop.Secret.Item.Label": .string(self.label ?? ""),
                 "org.freedesktop.Secret.Item.Attributes": dbusAttributes(for: key)
             ]
         )
@@ -118,7 +118,7 @@ extension Keyring {
         
         guard
             result?.dismissed == false,
-            let collection = result?.result.objectPath
+            let _ = result?.result.objectPath
         else {
             if result?.dismissed == false {
                 throw SecSError.noResponse
