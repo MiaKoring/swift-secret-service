@@ -30,13 +30,13 @@ jobs:
           swift package generate-documentation \
             --output-path ./docs-archives
           
-          # Install docc CLI
-          sudo apt-get install -y docc
-          
-          # Convert archives to static hosting
-          docc process-archive ./docs-archives/KeyringAccess.doccarchive \
+          # Use plugin to convert
+          swift package plugin \
+            --package-path . \
+            convert-documentation \
             --output-path ./docs \
-            --hosting-base-path KeyringAccess
+            --hosting-base-path KeyringAccess \
+            ./docs-archives/KeyringAccess.doccarchive
             
       - name: Setup Pages
         uses: actions/configure-pages@v4
