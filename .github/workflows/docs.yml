@@ -30,21 +30,18 @@ jobs:
           swift package generate-documentation \
             --output-path ./docs-archives
           
-          # Use plugin to convert
-          swift package plugin \
-            --package-path . \
-            convert-documentation \
+          # Use swift docc from the toolchain
+          swift docc process-archive ./docs-archives/KeyringAccess.doccarchive \
             --output-path ./docs \
-            --hosting-base-path KeyringAccess \
-            ./docs-archives/KeyringAccess.doccarchive
+            --hosting-base-path KeyringAccess
+                  
+            - name: Setup Pages
+              uses: actions/configure-pages@v4
             
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-      
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./docs
+            - name: Upload artifact
+              uses: actions/upload-pages-artifact@v3
+              with:
+                path: ./docs
   
   deploy:
     environment:
