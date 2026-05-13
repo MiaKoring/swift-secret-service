@@ -1,0 +1,9 @@
+import KeyringAccess
+
+try await Keyring.runBatched { service in
+    // Do operations, using service
+    let keyring = Keyring(server: "https://api.yourapp.com/")
+    
+    try await keyring.set("newToken", for: "user", service: service)
+    // ...
+}

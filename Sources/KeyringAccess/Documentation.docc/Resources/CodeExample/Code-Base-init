@@ -1,0 +1,6 @@
+import KeyringAccess
+
+// Set your app identifier globally before first use.
+Keyring.appIdentifier.withLock { identifier in
+    identifier = "com.example.YourApp"
+}

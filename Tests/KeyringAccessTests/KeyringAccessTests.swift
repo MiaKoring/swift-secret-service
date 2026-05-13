@@ -40,7 +40,7 @@ struct KeyringTest {
             identifier = "de.amethystsoft.KeyringAccess.Testing"
         }
         
-        let keyring = Keyring(service: "de.amethystsoft.KeyringAccess.Testing")
+        var keyring = Keyring(service: "de.amethystsoft.KeyringAccess.Testing")
         let key = "test"
         let secret = "Test123"
         
@@ -117,7 +117,7 @@ struct KeyringTest {
             identifier = "de.amethystsoft.KeyringAccess.Testing"
         }
         
-        let keyring = Keyring(service: "de.amethystsoft.KeyringAccess.Testing")
+        var keyring = Keyring(service: "de.amethystsoft.KeyringAccess.Testing")
         let key = "test"
         let secret = "Test123".data(using: .utf8)
         
@@ -156,6 +156,88 @@ struct KeyringTest {
         #expect(result == secret)
         
         try await keyring.setData(nil, for: key)
+    }
+    
+    @Test(.enabled(if: ProcessInfo.runIntegrationTests))
+    func testLabel() async throws {
+        Keyring.appIdentifier.withLock { identifier in
+            identifier = "de.amethystsoft.KeyringAccess.Testing"
+        }
+        
+        let label = "KeyringAccess Test"
+        let keyring = Keyring(service: "de.amethystsoft.KeyringAccess.Testing")
+            .label(label)
+        let key = "test"
+        let secret = "Test123"
+        
+        try await Keyring.runBatched { service in
+            try await keyring.set(secret, for: key, service: service)
+            let attributes = try await keyring[asyncAttributes: key]
+            
+            #expect(attributes?.label == label)
+            
+            let newSecret = "321tseT"
+            let newLabel = "KeyringAccess Test 2"
+            let newKeyring = keyring.label(newLabel)
+            
+            try await newKeyring.set(newSecret, for: key, service: service)
+            let newAttributes = try await newKeyring[asyncAttributes: key]
+            
+            #expect(newAttributes?.label == newLabel)
+            
+            try await keyring.set(nil, for: key, service: service)
+        }
+    }
+    
+    @Test(.enabled(if: ProcessInfo.runIntegrationTests))
+    func testAttributes() async throws {
+        Keyring.appIdentifier.withLock { identifier in
+            identifier = "de.amethystsoft.KeyringAccess.Testing"
+        }
+        
+        let label = "KeyringAccess Test"
+        let keyring = Keyring(service: "de.amethystsoft.KeyringAccess.Testing")
+            .label(label)
+        let key = "test"
+        let secret = "Test123"
+        
+        try await Keyring.runBatched { service in
+            let creationTime = Date()
+            try await keyring.set(secret, for: key, service: service)
+            let attributes = try await keyring[asyncAttributes: key]
+            
+            #expect(attributes?.label == label)
+            
+            let newSecret = "321tseT"
+            let newLabel = "KeyringAccess Test 2"
+            let newKeyring = keyring.label(newLabel)
+            
+            let editTime = Date()
+            try await newKeyring.set(newSecret, for: key, service: service)
+            guard let newAttributes = try await newKeyring[asyncAttributes: key] else {
+                Issue.record("No attributes for the given key")
+                try await keyring.set(nil, for: key, service: service)
+                return
+            }
+            
+            #expect(newAttributes.label == newLabel)
+            #expect(
+                abs(
+                    newAttributes.created.timeIntervalSince1970
+                    - creationTime.timeIntervalSince1970
+                )
+                <= 1.5
+            )
+            #expect(
+                abs(
+                    newAttributes.modified.timeIntervalSince1970
+                    - editTime.timeIntervalSince1970
+                )
+                <= 1.5
+            )
+            
+            try await keyring.set(nil, for: key, service: service)
+        }
     }
 }
 

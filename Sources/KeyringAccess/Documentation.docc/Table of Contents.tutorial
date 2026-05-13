@@ -1,0 +1,11 @@
+@Tutorials(name: "KeyringAccess") {
+    @Intro(title: "Meet KeyringAccess") {
+        Secure, zero system dependency storage of secrets on Linux.
+    }
+    
+    @Chapter(name: "Quick start") {
+        Get set up to easily save and manage credentials in your Linux Swift app.
+        
+        @TutorialReference(tutorial: "doc:Quick-start")
+    }
+}

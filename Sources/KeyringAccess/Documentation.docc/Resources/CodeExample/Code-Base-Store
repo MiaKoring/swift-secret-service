@@ -1,0 +1,17 @@
+import KeyringAccess
+
+// Set your app identifier globally before first use.
+Keyring.appIdentifier.withLock { identifier in
+    identifier = "com.example.YourApp"
+}
+
+// Create a new Keyring for a server or service.
+// Adding a label is optional, but recommended, so its visible in the system manager.
+let keyring = Keyring(server: "https://api.yourapp.com/")
+    .label("YourApp API key")
+
+// Store via subscript
+keyring["user"] = "mytoken123"
+
+// Store via setter (also available asynchronously)
+keyring.set("mytoken123", for: "user")
