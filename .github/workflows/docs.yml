@@ -20,23 +20,27 @@ jobs:
       
       - name: Generate DocC
         run: |
-          # 1. Generate archives (do NOT pre-create these paths with mkdir)
-          swift package generate-documentation --target KeyringAccess --output-path ./KA.doccarchive
-          swift package generate-documentation --target SecretService --output-path ./SS.doccarchive
+          # 1. Build archives (ignore move errors, the archives are still created in .build)
+          swift package generate-documentation --target KeyringAccess || true
+          swift package generate-documentation --target SecretService || true
           
-          # 2. Process KeyringAccess into the static folder
+          # 2. Locate the generated archives
+          KA_PATH=$(find .build -name "KeyringAccess.doccarchive" -type d | head -n 1)
+          SS_PATH=$(find .build -name "SecretService.doccarchive" -type d | head -n 1)
+          
+          # 3. Process KeyringAccess
           xcrun docc process-archive transform-for-static-hosting \
-            ./KA.doccarchive \
+            "$KA_PATH" \
             --output-path ./docs \
             --hosting-base-path KeyringAccess
 
-          # 3. Merge SecretService into the same static folder
+          # 4. Merge SecretService
           xcrun docc process-archive transform-for-static-hosting \
-            ./SS.doccarchive \
+            "$SS_PATH" \
             --output-path ./docs \
             --hosting-base-path KeyringAccess
 
-          # 4. Create root redirect (DocC uses lowercase paths for targets)
+          # 5. Create redirect
           echo '<script>window.location.href += "/documentation/keyringaccess"</script>' > ./docs/index.html
             
       - name: Setup Pages
