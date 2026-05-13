@@ -216,18 +216,23 @@ struct KeyringTest {
             try await newKeyring.set(newSecret, for: key, service: service)
             guard let newAttributes = try await newKeyring[asyncAttributes: key] else {
                 Issue.record("No attributes for the given key")
+                try await keyring.set(nil, for: key, service: service)
                 return
             }
             
             #expect(newAttributes.label == newLabel)
             #expect(
-                newAttributes.created.timeIntervalSince1970
-                - creationTime.timeIntervalSince1970
+                abs(
+                    newAttributes.created.timeIntervalSince1970
+                    - creationTime.timeIntervalSince1970
+                )
                 <= 1.5
             )
             #expect(
-                newAttributes.modified.timeIntervalSince1970
-                - editTime.timeIntervalSince1970
+                abs(
+                    newAttributes.modified.timeIntervalSince1970
+                    - editTime.timeIntervalSince1970
+                )
                 <= 1.5
             )
             
