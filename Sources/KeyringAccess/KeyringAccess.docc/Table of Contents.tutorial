@@ -6,6 +6,7 @@
     @Chapter(name: "Quick start") {
         Get set up to easily save and manage credentials in your Linux Swift app.
         
+        @Image(source: "key", alt: "An icon representing a quick start guide.")
         @TutorialReference(tutorial: "doc:Quick-start")
     }
 }
