@@ -1,9 +1,6 @@
 name: Build and Deploy DocC
 
 on:
-  push:
-    branches:
-      **
   workflow_dispatch:
 
 permissions:
