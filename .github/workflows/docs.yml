@@ -20,16 +20,26 @@ jobs:
       
       - name: Generate DocC
         run: |
-          swift build
-          swift package generate-documentation \
-            --output-path ./docs-archives
+          mkdir -p docs-archives
           
-          # Process archive on macOS with xcrun
-          $(xcrun --find docc) process-archive \
-            transform-for-static-hosting \
+          # 1. Generate archives for specific targets
+          swift package generate-documentation --target KeyringAccess --output-path ./docs-archives
+          swift package generate-documentation --target SecretService --output-path ./docs-archives
+          
+          # 2. Process KeyringAccess into the final docs folder
+          xcrun docc process-archive transform-for-static-hosting \
             ./docs-archives/KeyringAccess.doccarchive \
             --output-path ./docs \
             --hosting-base-path KeyringAccess
+
+          # 3. Process SecretService into the SAME docs folder (merging data)
+          xcrun docc process-archive transform-for-static-hosting \
+            ./docs-archives/SecretService.doccarchive \
+            --output-path ./docs \
+            --hosting-base-path KeyringAccess
+
+          # 4. Create a root redirect (defaults to KeyringAccess)
+          echo '<script>window.location.href += "/documentation/keyringaccess"</script>' > ./docs/index.html
             
       - name: Setup Pages
         uses: actions/configure-pages@v4
