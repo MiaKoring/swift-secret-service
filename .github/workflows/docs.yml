@@ -38,13 +38,13 @@ jobs:
             --output-path ./docs \
             --hosting-base-path KeyringAccess
             
-            - name: Setup Pages
-              uses: actions/configure-pages@v4
-            
-            - name: Upload artifact
-              uses: actions/upload-pages-artifact@v3
-              with:
-                path: ./docs
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docs
   
   deploy:
     environment:
