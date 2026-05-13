@@ -1,0 +1,40 @@
+import KeyringAccess
+
+// Set your app identifier globally before first use.
+Keyring.appIdentifier.withLock { identifier in
+    identifier = "com.example.YourApp"
+}
+
+// Create a new Keyring for a server or service.
+// Adding a label is optional, but recommended, so its visible in the system manager.
+let keyring = Keyring(server: "https://api.yourapp.com/")
+    .label("YourApp API key")
+
+// Store via subscript
+keyring["user"] = "mytoken123"
+
+// Store via setter (also available asynchronously)
+keyring.set("mytoken123", for: "user")
+
+// Updates are upserts.
+keyring["user"] = "newtoken123"
+
+// Read secret via subscript (also available asynchronously)
+let secret = keyring["user"]
+
+// Read secret via getter (also available asynchronously)
+let secret = keyring.get(for: "user")
+
+// Get attributes via subscript (also available asynchronously)
+if let attributes = keyring[attributes: "user"] {
+    print("Label: \(attributes.label)")
+    print("Created at: \(attributes.created)")
+    print("Modified at: \(attributes.modified)")
+}
+
+// Get attributes via getter (also available asynchronously)
+if let attributes = keyring.getAttributes("user") {
+    print("Label: \(attributes.label)")
+    print("Created at: \(attributes.created)")
+    print("Modified at: \(attributes.modified)")
+}
