@@ -1,0 +1,26 @@
+on:
+  workflow_dispatch:
+      
+jobs:
+  build-and-deploy:
+    runs-on: macos-latest # or ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Compile
+        uses: ./.github/actions/compile-docs
+        with:
+          target: KeyringAccess
+          use-swiftpm: 'true'
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Point to the generated doccarchive
+          path: 'KeyringAccess.doccarchive'
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
